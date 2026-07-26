@@ -17,3 +17,5 @@ The standards this repository follows. Read these before contributing.
   — when and how to record decisions.
 - [CONV-verbatim-sessions — Verbatim session capture](verbatim-sessions.md)
   — the rule that session records are byte-faithful.
+- [CONV-agent-capabilities — Agent capabilities: CLIs on PATH, or files](agent-capabilities.md)
+  — how shared capabilities reach every agent.

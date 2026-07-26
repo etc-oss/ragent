@@ -39,6 +39,7 @@ SPDX id, the basis is noted.
 | **jail.nix** (Alex David) | Machine-side confinement: Nix-native bubblewrap wrapper | pinned flake input | `GPL-3.0` | `LICENSE` file (GPLv3 text) | https://git.sr.ht/~alexdavid/jail.nix |
 | **Nixpkgs** | Package set / toolchains | pinned flake input | `MIT` | GitHub Licenses API | https://github.com/NixOS/nixpkgs |
 | **flake-utils** (Numtide) | Flake system helper | pinned flake input | `MIT` | GitHub Licenses API | https://github.com/numtide/flake-utils |
+| **git-surgeon** (raine) | Shared agent git CLI (ADR-0017) | pinned source input (`flake=false`), built via `buildRustPackage` | `MIT` | GitHub Licenses API | https://github.com/raine/git-surgeon |
 | **Bubblewrap** | Unprivileged sandbox that jail.nix drives | Nixpkgs package (via jail.nix) | `LGPL-2.0-or-later` | `SPDX-License-Identifier` in `bubblewrap.c` | https://github.com/containers/bubblewrap |
 | **Zellij** | Terminal workspace / two-side layout | Nixpkgs package (Phase 2) | `MIT` | GitHub Licenses API | https://github.com/zellij-org/zellij |
 | **Neovim** | Human-side editor | Nixpkgs package (Phase 2) | `Apache-2.0` AND `Vim` | `LICENSE.txt` (dual) | https://github.com/neovim/neovim |
@@ -54,11 +55,12 @@ Referenced for design; their code is not consumed by this repository.
 | **jailed-agents** (Anderson Joseph) | Already jails opencode/pi/crush via jail.nix; a large fraction of the "machine pane" | `MIT` | https://github.com/andersonjoseph/jailed-agents |
 | **sandnix** (srid) | Alternative confinement (landrun/Landlock on Linux, `sandbox-exec` on macOS) | `GPL-3.0` | https://github.com/srid/sandnix |
 
-## Candidate CLI tools (name collision — pin the exact one on adoption)
+## CLI tool identity (name collision — resolved)
 
-"git-surgeon" is at least four different projects. When a shared CLI is adopted
-onto `PATH` via the flake, pin the exact repository and record which one and why
-in an ADR. Two well-known candidates:
+"git-surgeon" is at least four different projects. **raine/git-surgeon is the one
+adopted** (ADR-0017), pinned at v0.1.17; it is in the attribution table above. The
+other well-known candidate is recorded here to document the collision that was
+resolved:
 
 | Project | Description | License | Source |
 |---|---|---|---|

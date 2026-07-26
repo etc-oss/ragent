@@ -55,7 +55,7 @@ Detailed plan (tasks, exit criteria, risks) in the
 | **0** | Scaffold, governance, knowledge system, plan | ✅ Complete |
 | **1** | The jail, one agent (confined loop; dogfood the jail) | ✅ Core verified |
 | **2** | The Zellij workspace (two sides + review boundary) | 🚧 In progress |
-| **3** | The tooling layer (shared CLIs on PATH; project template) | ⬜ Planned |
+| **3** | The tooling layer (shared CLIs on PATH; project template) | ✅ Core verified |
 | **4** | Observability + the 2nd/3rd agent | ⬜ Planned |
 | **5** | Open-source hardening (CI, example, audit, release) | ⬜ Planned |
 

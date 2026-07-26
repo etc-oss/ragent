@@ -15,8 +15,10 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LAYOUT="$REPO/workspace/ragent-workspace.kdl"
-RAGENT_RUN="$REPO/tools/ragent-run.sh"
+# Honor store-path overrides when run as a packaged app (`nix run .#workspace`);
+# fall back to repo-relative paths when run from a checkout.
+LAYOUT="${RAGENT_LAYOUT:-$REPO/workspace/ragent-workspace.kdl}"
+RAGENT_RUN="${RAGENT_RUN_BIN:-$REPO/tools/ragent-run.sh}"
 
 MAIN="$(cd "${1:?usage: ragent-workspace.sh <project-dir> [task]}" && pwd)"
 TASK="${2:-task}"

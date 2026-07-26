@@ -30,3 +30,4 @@ All were seeded from the [genesis conversation](../sessions/0001-genesis-archite
 | [0014](0014-runtime-env-secret-forwarding.md) | Provider API key via runtime env forwarding; no credential dir in the jail | accepted |
 | [0015](0015-cgroup-caps-systemd-run.md) | cgroup resource caps via an external systemd-run scope | accepted |
 | [0016](0016-agent-clone-not-worktree.md) | Agent works in a self-contained clone, not a git worktree | accepted |
+| [0017](0017-pin-git-surgeon.md) | Pin raine/git-surgeon as the shared agent git CLI | accepted |

@@ -200,7 +200,7 @@ colors are usable.
 
 ---
 
-## Phase 3 — The tooling layer  `TODO`
+## Phase 3 — The tooling layer  `WIP`
 
 **Goal:** shared capabilities available to every agent via `PATH`
 ([ADR-0007](../decisions/0007-shared-clis-on-path.md)), and `ragent` itself
@@ -209,6 +209,28 @@ consumable as a pinned flake input by downstream projects.
 **Study first:** the exact `git-surgeon` project to adopt (the name collides
 across ≥4 repos — see `THIRD_PARTY.md`); each agent's file/prompt extension
 points (for the "capabilities as files" path).
+
+**Landed + verified in the guest (2026-07-26):**
+- **git-surgeon pinned** (raine, v0.1.17 — [ADR-0017](../decisions/0017-pin-git-surgeon.md)):
+  a `flake=false` source built with `buildRustPackage`/`cargoLock` (0 git deps).
+  Builds; `git-surgeon 0.1.17` runs.
+- **Shared-tools layer** `sharedTools` = git-surgeon, git, ripgrep, fd, jq, placed
+  on **every agent's in-jail PATH** via `makeJailed*`'s `extraPkgs` (+ the human
+  shell). Verified by inspecting `jailed-opencode`'s bwrap PATH (all five present,
+  the *agent* by construction) and by **running them from inside the jail via
+  bash** — ADR-0007's thesis, end to end. Confinement re-run against the widened
+  profile: still **8/8**.
+- **Capabilities-as-files** pattern recorded:
+  [agent-capabilities convention](../conventions/agent-capabilities.md).
+- **Project template** `templates/default` + a packaged, checkout-free launcher
+  (`apps.workspace` → `nix run .#workspace`). Verified: `nix flake new -t .#default`
+  scaffolds a downstream project that composes ragent's workspace devshell as a
+  pinned input (local-override eval → `nix-shell`), and the packaged app sets up
+  the clone/metadata headlessly.
+
+**Remaining:** extract the consumable `ragent-config` repo — **deferred by owner
+decision** ([ADR-0012](../decisions/0012-defer-global-config-split.md)) until the
+global-vs-workspace boundary is clear.
 
 **Tasks**
 1. Pin the specific `git-surgeon` and put it (and other shared CLIs) on `PATH`

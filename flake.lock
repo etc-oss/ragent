@@ -95,6 +95,23 @@
         "type": "github"
       }
     },
+    "git-surgeon-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1779693326,
+        "narHash": "sha256-SeXHYZwhwvkYxFHW694Cp1VKKeehxgOdfKqShuPI7M4=",
+        "owner": "raine",
+        "repo": "git-surgeon",
+        "rev": "c62443cca3adb11d907d3968f5f423b83936d0b3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "raine",
+        "ref": "v0.1.17",
+        "repo": "git-surgeon",
+        "type": "github"
+      }
+    },
     "jail-nix": {
       "locked": {
         "lastModified": 1776230864,
@@ -219,6 +236,7 @@
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
+        "git-surgeon-src": "git-surgeon-src",
         "jail-nix": "jail-nix",
         "jailed-agents": "jailed-agents",
         "nixpkgs": "nixpkgs_3"
