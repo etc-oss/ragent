@@ -59,11 +59,25 @@ and the crush/opencode/pi jails), the `jail.nix` combinator set, and
   `jailed-probe` both evaluate/instantiate. The agent derivations use IFD
   (bun2nix) and must build in the guest — not eval on macOS.
 
-**Remaining (needs a Linux guest — the real exit gate):**
-- Start the Lima VM, confirm unprivileged user namespaces, build `jailed-probe`,
-  and run `confinement-test.sh` → negative controls must pass.
-- Build `jailed-opencode`; dogfood `jailed-claude-code`; forward the API key at
-  runtime; verify the cgroup caps actually bite (delegation).
+**Verified in a Linux guest (2026-07-26) — the confinement gate PASSES:**
+- Fresh Lima VM (`ragent`): Nix + flakes, unprivileged user namespaces on, cgroup
+  delegation in place.
+- `jailed-probe` builds from the pinned flake (same derivation hash cross-eval'd
+  on macOS), and `tools/confinement-test.sh` reports **8/8 controls pass**: cwd is
+  real and writable; the real `$HOME` secret, a planted SSH key, an out-of-project
+  file, and `/etc/shadow` are all unreadable; writes to `$HOME`/`/etc`/out-of-project
+  land on an ephemeral tmpfs and never reach the real filesystem. The jail's
+  `$HOME` is a fresh empty tmpfs.
+
+**Remaining in Phase 1:**
+- Build `jailed-opencode` (bun2nix) and run it confined; then dogfood
+  `jailed-claude-code`.
+- Fix jail DNS: the `network` combinator shares the net namespace but
+  `/etc/resolv.conf` is not bound, so the agent cannot yet resolve the LLM API
+  host — bind it (read-only) and forward the API key at runtime (ADR-0014).
+- Verify the cgroup caps actually bite: force an over-limit process under
+  `tools/ragent-run.sh` and confirm `MemoryMax` kills it (needs the guest's user
+  delegation working — ADR-0015).
 
 **Tasks**
 1. Stand up the long-lived Lima VM; confirm unprivileged user namespaces work
