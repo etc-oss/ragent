@@ -148,8 +148,9 @@ inside an SSH'd Lima session.
 
 **Landed + verified in the guest (2026-07-26):**
 - `flake.nix` adds a Linux `workspace` devshell — zellij 0.44.3, neovim 0.12.4
-  (**plain — no LSPs configured yet**), lazygit 0.63.1, git, and the jailed agents
-  on PATH (all confirmed running in-guest).
+  **with LSPs** (nixd/basedpyright/bashls via the nvim-0.11 `vim.lsp.enable` API;
+  clean startup + verified attach to `.nix`/`.py` — Polish), lazygit 0.63.1, git,
+  git-surgeon + rg/fd/jq, and the jailed agents on PATH (all confirmed in-guest).
 - `workspace/ragent-workspace.kdl` — two tabs. `dump-layout` on a live session
   confirms the structure: **HUMAN** = editor (`nvim`) + `review (lazygit)` on the
   main tree; **MACHINE** = `agent` shell + `agent log` (`tail -F .ragent/agent.log`)
@@ -170,10 +171,10 @@ inside an SSH'd Lima session.
   `dump-layout`; clone/env/metadata via the headless hook; `launch-agent.sh` via
   `--version`), but the launcher → **live-TUI composition** was not run end to end
   headlessly — that final hop is human-verified-later.
-- **Interactive usability not verified** — truecolor, clipboard passthrough, and
-  keybinding collisions (the [ADR-0005](../decisions/0005-zellij-two-pane-layout.md)
-  time-sinks) need a human at a real terminal; they cannot be driven headlessly.
-- neovim is plain; **LSPs are a later refinement**, not done.
+- **Interactive usability not verified headless** — truecolor, clipboard
+  passthrough, and keybinding collisions (the
+  [ADR-0005](../decisions/0005-zellij-two-pane-layout.md) time-sinks) need a human
+  at a real terminal. A sanity-check runbook is in the README ("Try the workspace").
 - A full loop with a real agent editing in the machine pane needs the owner's API
   key (the [ADR-0014](../decisions/0014-runtime-env-secret-forwarding.md) auth
   decision).

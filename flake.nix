@@ -94,16 +94,37 @@
         jailed-claude-code = ja.makeJailedClaudeCode { extraPkgs = sharedTools; };
 
         # ---- Phase 2: the Zellij workspace (Linux) ----
-        # neovim here is plain — no LSPs configured yet (a later refinement).
+        # neovim configured with LSP support (nvim-lspconfig) for the languages a
+        # ragent repo actually uses: Nix (nixd), Python (basedpyright), Bash (bashls).
+        lspServers = [ pkgs.nixd pkgs.basedpyright pkgs.bash-language-server ];
+        ragentNvim = pkgs.neovim.override {
+          configure = {
+            packages.ragent.start = [ pkgs.vimPlugins.nvim-lspconfig ];
+            customRC = ''
+              set number
+              set termguicolors
+              lua << LUAEOF
+              -- nvim 0.11+ LSP API; nvim-lspconfig supplies the server defs on
+              -- the runtimepath (its lsp/*.lua), so no deprecated framework call.
+              vim.lsp.enable({ 'nixd', 'basedpyright', 'bashls' })
+              vim.api.nvim_create_autocmd('LspAttach', { callback = function(ev)
+                local b = ev.buf
+                vim.keymap.set('n', 'gd', vim.lsp.buf.definition, { buffer = b })
+                vim.keymap.set('n', 'K',  vim.lsp.buf.hover,      { buffer = b })
+                vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, { buffer = b })
+              end })
+              LUAEOF
+            '';
+          };
+        };
+        # Shared between the workspace devshell and the packaged launcher app.
+        workspaceTools = [ pkgs.zellij ragentNvim pkgs.lazygit pkgs.git ] ++ lspServers ++ sharedTools;
         workspaceShell = pkgs.mkShell {
-          packages = [
-            pkgs.zellij pkgs.neovim pkgs.lazygit pkgs.git
-            jailed-opencode jailed-claude-code
-          ] ++ sharedTools;
+          packages = workspaceTools ++ [ jailed-opencode jailed-claude-code ];
           shellHook = ''
             echo "ragent workspace devshell (Phase 2–3)."
             echo "  Launch:  ./tools/ragent-workspace.sh <project-dir> [task]"
-            echo "  Tools:   zellij, nvim (plain), lazygit, git, git-surgeon, rg, fd, jq"
+            echo "  Tools:   zellij, nvim (+LSP: nixd/basedpyright/bashls), lazygit, git, git-surgeon, rg, fd, jq"
             echo "  Agents:  jailed-opencode, jailed-claude-code (run via tools/ragent-run.sh)"
           '';
         };
@@ -113,7 +134,7 @@
         # as runtime inputs, so downstream projects launch without cloning ragent.
         workspaceApp = pkgs.writeShellApplication {
           name = "ragent-workspace";
-          runtimeInputs = [ pkgs.zellij pkgs.neovim pkgs.lazygit pkgs.git jailed-opencode jailed-claude-code ] ++ sharedTools;
+          runtimeInputs = workspaceTools ++ [ jailed-opencode jailed-claude-code ];
           text = ''
             export RAGENT_LAYOUT=${./workspace/ragent-workspace.kdl}
             export RAGENT_RUN_BIN=${./tools/ragent-run.sh}

@@ -79,6 +79,37 @@ python3 tools/okf_render.py     # renders docs/knowledge/ -> docs/html/
 No third-party Python packages required (standard library only). The HTML is
 generated and must never be hand-edited.
 
+## Try the workspace (Linux guest)
+
+The jail and workspace run on Linux; from macOS/Windows use the bundled Lima VM.
+
+```sh
+# 1) one-time: a Nix-enabled guest with user namespaces + cgroup delegation
+limactl start --name=ragent lima/ragent.yaml
+limactl shell ragent
+
+# 2) inside the guest, on a git project (this repo works):
+cd /path/to/ragent
+nix develop .#workspace                       # zellij, nvim(+LSP), lazygit, git-surgeon, rg, fd, jq, agents
+./tools/ragent-workspace.sh "$PWD" mytask     # or, checkout-free: nix run .#workspace -- "$PWD" mytask
+```
+
+Then sanity-check at the terminal (the interactive parts that can't be verified
+headless):
+
+- **HUMAN tab** — neovim opens on the project; open a `.nix`/`.py`/`.sh` file and
+  confirm an LSP attaches (`gd` = go-to-def, `K` = hover). The lazygit pane shows
+  the repo.
+- **MACHINE tab** — a shell in the agent **clone** (`…-agent-mytask`). Export a
+  provider key (e.g. `ANTHROPIC_API_KEY`), run `./.ragent/launch-agent.sh`, and
+  watch the log pane fill. The agent can only touch the clone.
+- **Review** — from the HUMAN side: `git fetch <clone> agent/mytask` then
+  `git diff <default>..FETCH_HEAD`; `git merge FETCH_HEAD` to accept, or ignore to
+  discard. Nothing lands without this.
+- **Ergonomics** — confirm truecolor, clipboard copy/paste, and that Zellij's
+  keybindings don't collide with your terminal (avoid nesting tmux). These are the
+  [ADR-0005](docs/knowledge/decisions/0005-zellij-two-pane-layout.md) papercuts.
+
 ## License & attribution
 
 ragent's own code is licensed under [Apache-2.0](LICENSE)
