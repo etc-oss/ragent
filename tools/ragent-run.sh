@@ -24,6 +24,15 @@ TASKS="${RAGENT_TASKS_MAX:-512}"  # PID cap (fork-bomb guard)
 AGENT="${1:?usage: ragent-run.sh <jailed-agent-bin> [args...]}"; shift || true
 [ -x "$AGENT" ] || { echo "not executable: $AGENT" >&2; exit 1; }
 
+# Pre-create dirs the jail bind-mounts read-write: bwrap aborts with "Can't find
+# source path" if a bind source is missing. Agent state dirs must exist first.
+# Set a space-separated list, e.g. for opencode:
+#   RAGENT_PRECREATE_DIRS="$HOME/.config/opencode $HOME/.local/share/opencode $HOME/.local/state/opencode"
+if [ -n "${RAGENT_PRECREATE_DIRS:-}" ]; then
+  # shellcheck disable=SC2086
+  mkdir -p $RAGENT_PRECREATE_DIRS
+fi
+
 if command -v systemd-run >/dev/null 2>&1; then
   # NOTE (ADR-0015): --user scopes only enforce CPU/memory if the controllers are
   # delegated to the user session (a `Delegate=cpu memory pids` drop-in, or run as

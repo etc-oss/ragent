@@ -76,13 +76,25 @@ and the crush/opencode/pi jails), the `jail.nix` combinator set, and
   namespace resolves and connects — a TCP connect to the LLM API host from inside
   the jail succeeded. (An earlier "DNS fail" reading was a false negative: only
   `bash`+`coreutils` are on the jail PATH, so `getent`/`grep` were "not found".)
-- **A real agent runs confined:** `jailed-opencode` builds (bun2nix; opencode
-  1.18.5, wrapping the prebuilt linux-arm64 binary, `bubblewrap` in the closure)
-  and runs inside its bwrap jail — `opencode --version` → `1.18.5`, rc 0. The
-  wrapper binds only opencode's XDG dirs (`~/.config`, `~/.local/share`,
-  `~/.cache`, `~/.local/state` under `opencode/`) + cwd + network. **Operational
-  note:** those XDG dirs must pre-exist or bwrap aborts with "Can't find source
-  path" — a launcher/runbook must `mkdir -p` them first.
+- **A real agent builds and launches in its jail:** `jailed-opencode` builds
+  (bun2nix; opencode 1.18.5, wrapping the prebuilt linux-arm64 binary,
+  `bubblewrap` in the closure) and runs — `opencode --version` → `1.18.5`, rc 0,
+  including under `tools/ragent-run.sh` (cgroup scope + jail together, so the caps
+  *integration* is confirmed, not just the mechanism).
+- **opencode's confinement — established by bind-list inspection** (not by
+  re-running the 8 controls against its profile): its bwrap invocation makes only
+  `$PWD` and `~/.config/opencode`, `~/.local/share/opencode`,
+  `~/.local/state/opencode` real+writable; `~` and `/tmp` are fresh tmpfs and
+  everything else is `--ro-bind` (nix store, minimal `/etc`), with
+  user/ipc/pid/uts/cgroup unshared and net shared for egress. So opencode is
+  confined by construction to the project dir + its own state dirs.
+- **Operational + secret notes:** the bound XDG dirs must pre-exist or bwrap
+  aborts ("Can't find source path") — `ragent-run.sh` now pre-creates them via
+  `RAGENT_PRECREATE_DIRS`. And `~/.local/share/opencode` is bound **read-write**,
+  where opencode persists auth — the exact credential-dir case
+  [ADR-0014](../decisions/0014-runtime-env-secret-forwarding.md) flags: when
+  wiring real auth, decide deliberately (env-forward the key vs. accept the bound
+  auth dir).
 
 **Remaining in Phase 1:**
 - A full agent-driven edit: run `jailed-opencode` on a real task with a

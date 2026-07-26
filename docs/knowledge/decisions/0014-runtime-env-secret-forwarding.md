@@ -52,6 +52,16 @@ jail — which quietly re-imports the very secret the zero-trust jail excludes.
 - **A full secrets manager (agenix/sops)** — over-engineered for Phase 1; revisit
   if multiple secrets appear.
 
+## Phase 1 finding (opencode)
+
+Inspecting `jailed-opencode`'s actual bwrap bind list shows jailed-agents'
+`makeJailedOpencode` binds `~/.local/share/opencode` **read-write** into the jail
+— and opencode persists its auth there. So its default profile is in direct
+tension with this ADR. **Unresolved** (no real auth wired yet): when wiring
+opencode auth, either env-forward the provider key and drop/override that bind,
+or consciously accept that opencode's credentials live in the real
+`~/.local/share/opencode`. Decide deliberately at that point.
+
 ## Links
 - [Genesis session](../sessions/0001-genesis-architecture-conversation.md)
 - [ADR-0002 — jail.nix for confinement](0002-jail-nix-confinement.md)
