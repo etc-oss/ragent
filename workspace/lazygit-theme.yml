@@ -1,24 +1,24 @@
-# Neon/pastel lazygit theme — Tokyo Night Storm (blue/purple accents, no green).
+# Neon lazygit theme — Tokyo Night Moon (bright blue/purple accents, no green).
 # Applied by tools/ragent-workspace.sh via LG_CONFIG_FILE.
 gui:
   theme:
     activeBorderColor:
-      - "#7aa2f7"   # blue
+      - "#82aaff"   # bright blue
       - bold
     inactiveBorderColor:
-      - "#565f89"   # comment
+      - "#589ed7"   # dim cyan
     optionsTextColor:
-      - "#7dcfff"   # cyan
+      - "#86e1fc"   # bright cyan
     selectedLineBgColor:
-      - "#292e42"   # bg highlight
+      - "#2d3f76"   # selection
     cherryPickedCommitBgColor:
       - "#3b4261"
     cherryPickedCommitFgColor:
-      - "#bb9af7"   # purple
+      - "#c099ff"   # bright purple
     unstagedChangesColor:
-      - "#f7768e"   # red
+      - "#ff757f"   # bright red
     defaultFgColor:
-      - "#c0caf5"   # fg
+      - "#c8d3f5"   # fg
     searchingActiveBorderColor:
-      - "#e0af68"   # yellow
-  authorColorDefault: "#bb9af7"  # purple
+      - "#ffc777"   # bright yellow
+  authorColorDefault: "#c099ff"  # bright purple

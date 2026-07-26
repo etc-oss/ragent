@@ -1,19 +1,19 @@
-// Neon/pastel workspace theme — Tokyo Night Storm, with green remapped to neon
-// cyan so the pane chrome (frames, tabs, status bar) shows NO explicit green.
-// Applied by tools/ragent-workspace.sh via `zellij --config`.
+// Neon/pastel workspace theme — Tokyo Night Moon (brighter accents), with green
+// remapped to bright neon cyan so the pane chrome (frames, tabs, status bar) shows
+// NO explicit green. Applied by tools/ragent-workspace.sh via `zellij --config`.
 themes {
     ragent-neon {
-        fg "#c0caf5"
-        bg "#24283b"
-        black "#1d202f"
-        red "#f7768e"
-        green "#7dcfff"     // neutralized: neon cyan instead of green
-        yellow "#e0af68"
-        blue "#7aa2f7"
-        magenta "#bb9af7"
-        cyan "#7dcfff"
-        white "#c0caf5"
-        orange "#ff9e64"
+        fg "#c8d3f5"
+        bg "#1a1b26"
+        black "#15161e"
+        red "#ff757f"
+        green "#86e1fc"     // neutralized: bright neon cyan instead of green
+        yellow "#ffc777"
+        blue "#82aaff"
+        magenta "#c099ff"
+        cyan "#86e1fc"
+        white "#c8d3f5"
+        orange "#ff966c"
     }
 }
 theme "ragent-neon"

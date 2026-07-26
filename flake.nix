@@ -114,13 +114,19 @@
               -- Tokyo Night (neon/pastel, VS-Code-adjacent) with greens neutralized
               -- to neon cyan/teal — no explicit greens in the palette.
               require('tokyonight').setup({
-                style = 'storm',
+                style = 'moon',           -- brighter, more neon than storm
                 on_colors = function(c)
-                  c.green = '#7dcfff'; c.green1 = '#7dcfff'; c.green2 = '#89ddff'
-                  c.teal = '#2ac3de'
+                  -- neutralize greens to bright neon cyan (no explicit greens)
+                  c.green = '#86e1fc'; c.green1 = '#86e1fc'; c.green2 = '#89ddff'
+                  c.teal = '#86e1fc'
+                end,
+                on_highlights = function(hl, c)
+                  -- push accents brighter/neon
+                  hl['@function'] = { fg = '#82aaff' }
+                  hl['@keyword']  = { fg = '#c099ff' }
                 end,
               })
-              vim.cmd.colorscheme('tokyonight-storm')
+              vim.cmd.colorscheme('tokyonight-moon')
 
               -- nvim 0.11+ LSP API; nvim-lspconfig supplies the server defs on
               -- the runtimepath (its lsp/*.lua), so no deprecated framework call.
@@ -136,13 +142,13 @@
           };
         };
         # Shared between the workspace devshell and the packaged launcher app.
-        workspaceTools = [ pkgs.zellij ragentNvim pkgs.lazygit pkgs.git ] ++ lspServers ++ sharedTools;
+        workspaceTools = [ pkgs.zellij ragentNvim pkgs.lazygit pkgs.git pkgs.btop ] ++ lspServers ++ sharedTools;
 
         # Tools the Zellij panes invoke at runtime (nvim/lazygit/git/tail/…). Baked
         # into the layout as an explicit PATH so panes work from ANY launch context,
         # not only the devshell (fixes the "launch from devshell or tools not found"
         # footgun that could leave a broken session).
-        paneBin = pkgs.lib.makeBinPath ([ pkgs.bashInteractive pkgs.coreutils pkgs.git pkgs.lazygit ragentNvim ] ++ sharedTools ++ allAgents);
+        paneBin = pkgs.lib.makeBinPath ([ pkgs.bashInteractive pkgs.coreutils pkgs.git pkgs.lazygit pkgs.btop ragentNvim ] ++ lspServers ++ sharedTools ++ allAgents);
         # The layout is a template; substitute the absolute bash + the pane PATH.
         workspaceLayout = pkgs.writeText "ragent-workspace.kdl" (builtins.replaceStrings
           [ "@bash@" "@paneBin@" ]

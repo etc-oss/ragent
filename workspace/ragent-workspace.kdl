@@ -31,14 +31,20 @@ layout {
         }
     }
 
-    // MACHINE: a shell in the agent clone (launch the jailed agent here) + a log tail.
+    // MACHINE: the agent shell (top), with a bottom row of the agent log + a live
+    // hardware-metrics pane (CPU / memory / disk / net / processes, via btop).
     tab name="MACHINE" {
         pane split_direction="horizontal" {
-            pane name="agent" command="@bash@" {
+            pane name="agent" size="60%" command="@bash@" {
                 args "-c" "export PATH=@paneBin@:\"$PATH\"; cd \"$RAGENT_CLONE\" && cat .ragent/README 2>/dev/null; exec @bash@"
             }
-            pane name="agent log" size="30%" command="@bash@" {
-                args "-c" "export PATH=@paneBin@:\"$PATH\"; cd \"$RAGENT_CLONE\" && exec tail -n +1 -F \"$RAGENT_LOG\""
+            pane split_direction="vertical" size="40%" {
+                pane name="agent log" command="@bash@" {
+                    args "-c" "export PATH=@paneBin@:\"$PATH\"; cd \"$RAGENT_CLONE\" && exec tail -n +1 -F \"$RAGENT_LOG\""
+                }
+                pane name="metrics (btop)" command="@bash@" {
+                    args "-c" "export PATH=@paneBin@:\"$PATH\"; exec btop --preset 0"
+                }
             }
         }
     }
