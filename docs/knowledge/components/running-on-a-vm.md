@@ -96,9 +96,33 @@ Everything ragent-specific is host-agnostic: the `flake.nix` (jail, agents,
 `tools/`, the KDL layout, and the provisioning steps in `lima/ragent.yaml`. The
 only macOS-coupled piece is Lima itself — which options A and B drop.
 
+## A vs B, head to head
+
+| | **A — dedicated Linux VM** (imperative) | **B — NixOS / microvm.nix** (declarative) |
+|---|---|---|
+| Time to first run | **Hours.** Reuses the existing provisioning as cloud-init. | **Days.** Write a NixOS module / microvm config first. |
+| Reproducibility | Nix reproduces the *toolchain*; the *box* is a mutable pet that drifts. | **The box itself is code** — rebuild an identical one on demand (cattle). |
+| Provisioning | Idempotent shell/cloud-init (the same steps that hit the nix-probe bug). | Clean NixOS options — no scripts, no idempotency bugs. |
+| Fits ragent's ethos | Partial (Nix inside a non-Nix box). | **Full** — pinned, reproducible, "forkable per project" all the way down. |
+| Isolation | bwrap in a shared-kernel VM (today's model). | Can add **VM-per-agent** (microVM) — stronger than bwrap, the [ADR-0002](../decisions/0002-jail-nix-confinement.md) "microvm.nix future" and pi's Gondolin pattern. |
+| On a **Mac** | Clean: macOS → one cloud/local Linux VM. | Nests again: macOS → Linux host → microVM, **unless** you use a cloud Linux box or a Linux workstation. |
+| Debugging | Familiar Linux ops. | Nix-shaped errors; steeper. |
+| Could be a flake output | No (external box). | **Yes** — `nixosConfigurations.ragent` / a microvm, so the flake spins up the *whole* environment. |
+
 ## Recommendation
 
-Start with **A** (a dedicated Linux VM): least new Nix work, immediately removes
-the host dependency and the broad mount, and reuses the provisioning you already
-have. Graduate to **B** (NixOS/microvm.nix) when you want the dev box itself to
-be declarative and reproducible.
+**Start with A, target B.**
+
+- **A now** — least new work, gets you off the host immediately, removes the broad
+  home mount, reuses provisioning you already have, and validates the workflow on
+  a real VM. Best *first* step, especially to move quickly.
+- **B as the endgame** — it is the more *correct* architecture for a Nix-native,
+  reproducibility-first project like ragent: the dev box becomes declarative and
+  forkable, and **microvm.nix can upgrade confinement itself** (a VM boundary per
+  agent, not just bwrap). Worth it once the workflow is proven — and it pays off
+  most if you run on a **Linux host or a cloud Linux box** (no re-nesting) and are
+  comfortable in Nix.
+
+The tie-breaker is your host and appetite: on a **cloud/Linux box + Nix-comfort**,
+you could even skip straight to B (it's the destination). On a **Mac, moving
+fast**, A is the pragmatic bridge and B is the thing to grow into.
