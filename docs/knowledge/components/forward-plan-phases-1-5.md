@@ -68,6 +68,10 @@ and the crush/opencode/pi jails), the `jail.nix` combinator set, and
   file, and `/etc/shadow` are all unreadable; writes to `$HOME`/`/etc`/out-of-project
   land on an ephemeral tmpfs and never reach the real filesystem. The jail's
   `$HOME` is a fresh empty tmpfs.
+- **cgroup caps enforce** (ADR-0015): controllers `cpu/memory/pids` are delegated
+  to the user session, and a `MemoryMax=50M` `systemd-run --user --scope`
+  OOM-killed an unbounded allocation instantly (not a timeout). `ragent-run.sh`'s
+  mechanism bites.
 
 **Remaining in Phase 1:**
 - Build `jailed-opencode` (bun2nix) and run it confined; then dogfood
@@ -75,9 +79,6 @@ and the crush/opencode/pi jails), the `jail.nix` combinator set, and
 - Fix jail DNS: the `network` combinator shares the net namespace but
   `/etc/resolv.conf` is not bound, so the agent cannot yet resolve the LLM API
   host — bind it (read-only) and forward the API key at runtime (ADR-0014).
-- Verify the cgroup caps actually bite: force an over-limit process under
-  `tools/ragent-run.sh` and confirm `MemoryMax` kills it (needs the guest's user
-  delegation working — ADR-0015).
 
 **Tasks**
 1. Stand up the long-lived Lima VM; confirm unprivileged user namespaces work
