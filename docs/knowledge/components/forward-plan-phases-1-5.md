@@ -120,6 +120,10 @@ points (for the "capabilities as files" path).
 3. Provide a `nix flake init` template so a new project can scaffold a ragent
    workspace and consume ragent as an input.
 4. Exercise agents calling the shared CLIs through bash (the common denominator).
+5. Evaluate the global-vs-workspace boundary that emerged in Phases 1–3 and,
+   once it is clear, extract the shared config into a consumable `ragent-config`
+   repo ([ADR-0012](../decisions/0012-defer-global-config-split.md)) — preserving
+   git history and attribution. (Deferred from Phase 0 by owner decision.)
 
 **Deliverables:** shared CLIs on `PATH`; a project template; an ADR pinning the
 git-surgeon identity.

@@ -41,7 +41,7 @@ border-radius:8px;padding:.8rem 1rem}.card .t{font-weight:600}.card .d{color:var
 
 <h1>ragent knowledge bundle</h1>
 <p>Generated view of the <code>docs/knowledge/</code> OKF bundle. <a href="graph.html">Open the knowledge graph &rarr;</a></p>
-<p class="gen">25 concepts (2 session, 11 decision, 4 component, 3 convention, 5 index).</p>
+<p class="gen">26 concepts (2 session, 12 decision, 4 component, 3 convention, 5 index).</p>
 <h2>session</h2><div class="cards">
 <div class="card"><div class="t"><a href="sessions/0001-genesis-architecture-conversation.html">Genesis: AI-powered Zellij workspace with human-machine panes</a></div><div class="d">The verbatim design conversation that originated ragent — architecture brief, peer-review evaluation, the development-and-open-sourcing roadmap, and model introspection.</div></div>
 <div class="card"><div class="t"><a href="sessions/0002-phase0-bootstrap-prompt.html">Phase 0 bootstrap prompt (verbatim)</a></div><div class="d">The exact prompt handed to Claude Code (Opus) to execute the Phase 0 bootstrap of ragent.</div></div>
@@ -58,6 +58,7 @@ border-radius:8px;padding:.8rem 1rem}.card .t{font-weight:600}.card .d{color:var
 <div class="card"><div class="t"><a href="decisions/0009-opus-design-sonnet-execution.html">Opus-for-design / Sonnet-for-execution model split</a></div><div class="d">Plan and design with Opus, execute build volume with Sonnet, delegate mechanical work to Haiku — while treating context hygiene as more decisive than model choice.</div></div>
 <div class="card"><div class="t"><a href="decisions/0010-local-mirror-resilience.html">Local-mirror resilience, kept out of the public repo</a></div><div class="d">Guarantee offline rebuildability with flake.lock pins, nix flake archive, and a private upstream mirror with override failover — deliberately kept separate from the public repo.</div></div>
 <div class="card"><div class="t"><a href="decisions/0011-git-worktree-review-boundary.html">Git-worktree review boundary for human oversight</a></div><div class="d">The agent proposes changes on a dedicated branch/worktree that the human reviews before landing; push/deploy secrets stay on the human side.</div></div>
+<div class="card"><div class="t"><a href="decisions/0012-defer-global-config-split.html">Defer splitting out a consumable global-config repo</a></div><div class="d">Keep ragent as a single umbrella repo now; extract a separately-consumable global-config input (ragent-config) in a later phase, once the global-vs-workspace boundary is clear.</div></div>
 </div>
 <h2>component</h2><div class="cards">
 <div class="card"><div class="t"><a href="components/architecture-overview.html">Architecture overview</a></div><div class="d">The layered architecture of ragent — host, VM, jail, the two Zellij panes, the tooling layer, and the knowledge layer — and how the seed decisions fit together.</div></div>

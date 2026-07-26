@@ -52,13 +52,14 @@ human reviews diffs before anything lands ([ADR-0011](../decisions/0011-git-work
 
 The name `ragent` appears in two roles in the genesis conversation: (1) this
 repository — the umbrella workspace/harness — and (2) a "global config repo …
-consumed as a pinned flake input, not forked." This repo takes role (1): it is
-the umbrella project. Per-project forks consume it (or a global-config subset of
-it) as a **pinned flake input** they compose and override, consistent with
-[ADR-0003](../decisions/0003-consume-upstreams-as-flake-inputs.md). *(Open
-question flagged for the owner: whether the consumable global-config should later
-be split into its own repo. A rename/split is cheap and can be recorded as an
-ADR if chosen.)*
+consumed as a pinned flake input, not forked." For now this repo takes role (1):
+it is the umbrella project, and per-project forks consume it as a **pinned flake
+input** they compose and override, consistent with
+[ADR-0003](../decisions/0003-consume-upstreams-as-flake-inputs.md). The
+**intended end-state is the split**: a separate `ragent-config` repo (the shared
+brain) that many project-workspaces consume as an input — deferred until the
+global-vs-workspace boundary is clear, per
+[ADR-0012](../decisions/0012-defer-global-config-split.md).
 
 ## Structure, and deviations from the bootstrap prompt
 

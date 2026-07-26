@@ -25,3 +25,4 @@ All were seeded from the [genesis conversation](../sessions/0001-genesis-archite
 | [0009](0009-opus-design-sonnet-execution.md) | Opus-for-design / Sonnet-for-execution model split | accepted |
 | [0010](0010-local-mirror-resilience.md) | Local-mirror resilience, kept out of the public repo | accepted |
 | [0011](0011-git-worktree-review-boundary.md) | Git-worktree review boundary for human oversight | proposed |
+| [0012](0012-defer-global-config-split.md) | Defer splitting out a consumable global-config repo | accepted |
