@@ -155,14 +155,21 @@ inside an SSH'd Lima session.
   main tree; **MACHINE** = `agent` shell + `agent log` (`tail -F .ragent/agent.log`)
   in the agent clone. cwds resolve via env the launcher exports.
 - `tools/ragent-workspace.sh` — sets up the agent **clone** (ADR-0016), writes a
-  per-clone launch helper + log, and starts Zellij. Caught + fixed a real bug:
-  the correct flag is `--new-session-with-layout` (plain `--session … --layout`
-  adds tabs to an *existing* session).
+  per-clone launch helper + log, and starts Zellij with `--new-session-with-layout`
+  (caught + fixed a real bug: plain `--session … --layout` adds tabs to an
+  *existing* session). The generated `.ragent/launch-agent.sh` is verified end to
+  end: `--version` runs opencode 1.18.5 confined + capped and its output reaches
+  `.ragent/agent.log`, so the MACHINE log pane will populate.
 - **Review boundary verified headlessly** (ADR-0011/0016): the agent commits
   inside its clone, `main` stays untouched until the human `git fetch`es the
-  `agent/<task>` branch and merges — nothing lands without that gate.
+  `agent/<task>` branch and merges — nothing lands without that gate. `.ragent/`
+  metadata is excluded from the agent's commits (verified).
 
 **Remaining / honest caveats:**
+- The launcher's **pieces** are verified (the `-s NAME -n LAYOUT` invocation via
+  `dump-layout`; clone/env/metadata via the headless hook; `launch-agent.sh` via
+  `--version`), but the launcher → **live-TUI composition** was not run end to end
+  headlessly — that final hop is human-verified-later.
 - **Interactive usability not verified** — truecolor, clipboard passthrough, and
   keybinding collisions (the [ADR-0005](../decisions/0005-zellij-two-pane-layout.md)
   time-sinks) need a human at a real terminal; they cannot be driven headlessly.
@@ -260,8 +267,12 @@ core loop warrants it — explicitly resisted.
 
 **Tasks**
 1. `README` polish; a worked **example project** demonstrating the full loop.
-2. CI: `nix flake check`; run the confinement negative-control tests; regenerate
-   and verify `docs/html/` is in sync with `docs/knowledge/`.
+2. CI: `nix flake check`; regenerate and verify `docs/html/` is in sync with
+   `docs/knowledge/`. **Wire the in-guest scripts into `flake check`s** rather
+   than leaving them hand-run — `confinement-test.sh`, `ragent-run.sh`'s cap
+   check, the workspace layout/boundary tests, and `okf_render.py` were all
+   verified by hand this far and are regression surface; make them checks (Linux
+   checks for the jail/workspace, a host check for the renderer).
 3. License/attribution audit: re-verify `THIRD_PARTY.md`; confirm no upstream
    code was vendored; confirm the mirror layer is absent from the public repo.
 4. Finalize the local-mirror/resilience runbook ([ADR-0010](../decisions/0010-local-mirror-resilience.md));
