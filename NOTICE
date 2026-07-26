@@ -56,12 +56,20 @@ Studied as prior art (not dependencies of this repository):
   - sandnix — Sridhar Ratnakumar (srid) — GPL-3.0
         https://github.com/srid/sandnix
 
-Candidate CLI tools (a specific one is pinned when adopted; see THIRD_PARTY.md):
+Shared CLI tool (adopted, ADR-0017):
 
-  - git-surgeon — raine — MIT
+  - git-surgeon — raine — MIT — pinned source, built with buildRustPackage
         https://github.com/raine/git-surgeon
-  - git-surgeon — hyperb1iss — GPL-2.0
-        https://github.com/hyperb1iss/git-surgeon
+  (Not adopted, recorded for the resolved name collision:
+   git-surgeon — hyperb1iss — GPL-2.0 — https://github.com/hyperb1iss/git-surgeon)
+
+Coding agents (consumed via the pinned jailed-agents / llm-agents inputs; each
+retains its own upstream license — Claude Code is proprietary/unfree, hence
+allowUnfree; the others are open source). Verify each on publish:
+
+  - opencode, pi, crush, Claude Code, …
+        https://github.com/andersonjoseph/jailed-agents  (jails them via jail.nix)
+        https://github.com/numtide/llm-agents.nix        (packages them)
 
 See THIRD_PARTY.md for the full attribution table, verification notes, and the
 reference-don't-redistribute rationale.

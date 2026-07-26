@@ -16,10 +16,14 @@ The machine side gets a read-write bind mount to the **project directory only** 
 Shared CLI tools go on `PATH` via the flake so every agent can call them through
 bash. Upstreams are consumed as **pinned flake inputs**, never vendored.
 
-> **Status: Phase 0 (scaffold + governance + knowledge + plan) — complete.**
-> This is an early, local-only scaffold. The runtime (VM, jail, Zellij, agents)
-> is planned and built incrementally from Phase 1. Nothing here has been run as a
-> live jail yet. See the roadmap below.
+> **Status: Phases 0–5 built and verified locally** (macOS host + a Lima Linux
+> guest); **local-only, nothing published.** The confinement gate (8/8), cgroup
+> caps, four confined agents (opencode, Claude Code, pi, crush), the two-side
+> workspace with a git-clone review boundary, the shared tooling layer, and the
+> project template are all verified in-guest, and `nix flake check` passes there.
+> Not yet wired into CI; a real agent *edit* still needs your provider key. See
+> the [forward plan](docs/knowledge/components/forward-plan-phases-1-5.md) for the
+> honest, per-item caveats.
 
 ## Why this exists
 
@@ -56,8 +60,11 @@ Detailed plan (tasks, exit criteria, risks) in the
 | **1** | The jail, one agent (confined loop; dogfood the jail) | ✅ Core verified |
 | **2** | The Zellij workspace (two sides + review boundary) | 🚧 In progress |
 | **3** | The tooling layer (shared CLIs on PATH; project template) | ✅ Core verified |
-| **4** | Observability + the 2nd/3rd agent | ⬜ Planned |
-| **5** | Open-source hardening (CI, example, audit, release) | ⬜ Planned |
+| **4** | Observability + more agents (opencode, Claude Code, pi, crush) | ✅ Core verified |
+| **5** | Open-source hardening (CI prepared, CONTRIBUTING, audit, VM guide) | ✅ Core (pre-publish) |
+
+See also: [CONTRIBUTING](CONTRIBUTING.md) · [CHANGELOG](CHANGELOG.md) ·
+[running ragent on a VM instead of the host](docs/knowledge/components/running-on-a-vm.md).
 
 ## Knowledge bundle
 

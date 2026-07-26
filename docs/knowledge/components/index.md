@@ -19,3 +19,5 @@ Architecture concepts and planning.
   — how the bundle is authored and rendered.
 - [COMP-draft-flake-vision — Draft flake (original vision, preserved)](draft-flake-vision.md)
   — the verbatim pre-Phase-0 flake the starter builds toward.
+- [COMP-running-on-a-vm — Running ragent on a VM instead of the host](running-on-a-vm.md)
+  — how to drop the Lima layer and run host-independently (cloud / NixOS VM).

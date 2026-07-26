@@ -56,6 +56,8 @@ BIN="\$(command -v "\$AGENT")" || { echo "agent \$AGENT not on PATH — enter 'n
 case "\$AGENT" in
   *opencode*) export RAGENT_PRECREATE_DIRS="\$HOME/.config/opencode \$HOME/.local/share/opencode \$HOME/.local/state/opencode" ;;
   *claude*)   mkdir -p "\$HOME/.claude"; [ -f "\$HOME/.claude.json" ] || echo "{}" > "\$HOME/.claude.json"; export RAGENT_PRECREATE_DIRS="\$HOME/.claude" ;;
+  *pi*)       export RAGENT_PRECREATE_DIRS="\$HOME/.pi" ;;
+  *crush*)    export RAGENT_PRECREATE_DIRS="\$HOME/.config/crush \$HOME/.local/share/crush" ;;
 esac
 echo "launching \$AGENT (confined + capped) — logging to $LOG"
 "$RAGENT_RUN" "\$BIN" "\$@" 2>&1 | tee -a "$LOG"

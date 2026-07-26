@@ -89,9 +89,14 @@
         ];
         jailed-probe = jail "ragent-jail-probe" pkgs.bashInteractive confinementProfile;
 
-        # Agents get the shared tools on their in-jail PATH via extraPkgs.
+        # Agents get the shared tools on their in-jail PATH via extraPkgs. All four
+        # are jailed identically (same confinement + sharedTools), so they invoke
+        # the tooling layer uniformly through bash.
         jailed-opencode = ja.makeJailedOpencode { extraPkgs = sharedTools; };
         jailed-claude-code = ja.makeJailedClaudeCode { extraPkgs = sharedTools; };
+        jailed-pi = ja.makeJailedPi { extraPkgs = sharedTools; };
+        jailed-crush = ja.makeJailedCrush { extraPkgs = sharedTools; };
+        allAgents = [ jailed-opencode jailed-claude-code jailed-pi jailed-crush ];
 
         # ---- Phase 2: the Zellij workspace (Linux) ----
         # neovim configured with LSP support (nvim-lspconfig) for the languages a
@@ -120,7 +125,7 @@
         # Shared between the workspace devshell and the packaged launcher app.
         workspaceTools = [ pkgs.zellij ragentNvim pkgs.lazygit pkgs.git ] ++ lspServers ++ sharedTools;
         workspaceShell = pkgs.mkShell {
-          packages = workspaceTools ++ [ jailed-opencode jailed-claude-code ];
+          packages = workspaceTools ++ allAgents;
           shellHook = ''
             echo "ragent workspace devshell (Phase 2–3)."
             echo "  Launch:  ./tools/ragent-workspace.sh <project-dir> [task]"
@@ -134,7 +139,7 @@
         # as runtime inputs, so downstream projects launch without cloning ragent.
         workspaceApp = pkgs.writeShellApplication {
           name = "ragent-workspace";
-          runtimeInputs = workspaceTools ++ [ jailed-opencode jailed-claude-code ];
+          runtimeInputs = workspaceTools ++ allAgents;
           text = ''
             export RAGENT_LAYOUT=${./workspace/ragent-workspace.kdl}
             export RAGENT_RUN_BIN=${./tools/ragent-run.sh}
@@ -146,9 +151,18 @@
         devShells.default = docsShell;
       }
       // lib.optionalAttrs isLinux {
-        packages = { inherit jailed-probe jailed-opencode jailed-claude-code git-surgeon; };
+        packages = { inherit jailed-probe jailed-opencode jailed-claude-code jailed-pi jailed-crush git-surgeon; };
         devShells = { default = docsShell; workspace = workspaceShell; };
-        apps.workspace = { type = "app"; program = "${workspaceApp}/bin/ragent-workspace"; };
+        apps.workspace = {
+          type = "app";
+          program = "${workspaceApp}/bin/ragent-workspace";
+          meta.description = "Launch the ragent two-side human/machine workspace on a project.";
+        };
+        # `nix flake check` builds these (the jail + the shared CLI). The
+        # confinement negative-control RUNTIME test and docs-sync run in CI
+        # (.github/workflows/ci.yml) — bubblewrap needs runtime namespaces a nix
+        # build sandbox can't guarantee.
+        checks = { inherit jailed-probe git-surgeon; };
       }
     ))
     // {

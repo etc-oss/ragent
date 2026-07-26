@@ -1,0 +1,40 @@
+name: CI
+
+# Prepared for when ragent is published. The jail + workspace need Linux
+# (bubblewrap), so everything runs on ubuntu-latest.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  flake-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Enable unprivileged user namespaces (bubblewrap prerequisite)
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+      - name: nix flake check
+        run: nix flake check --print-build-logs
+      - name: Confinement negative-control gate
+        run: bash tools/confinement-test.sh
+
+  docs-sync:
+    # The generated HTML must be committed in sync with docs/knowledge/.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Regenerate the OKF HTML view
+        run: python3 tools/okf_render.py
+      - name: Fail if docs/html is out of sync
+        run: |
+          git diff --exit-code -- docs/html || {
+            echo "::error::docs/html is stale — run 'python3 tools/okf_render.py' and commit."
+            exit 1
+          }

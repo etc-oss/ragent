@@ -257,10 +257,31 @@ universal-plugin abstraction (deliberately deferred).
 
 ---
 
-## Phase 4 — Observability + the 2nd/3rd agent  `TODO`
+## Phase 4 — Observability + the 2nd/3rd agent  `WIP`
 
-**Goal:** usable observability, then breadth — add pi and opencode once the loop
-is solid with the first agent.
+**Goal:** usable observability, then breadth — add more agents once the loop is
+solid with the first.
+
+**Landed:**
+- **Four agents, jailed identically.** opencode + Claude Code were verified
+  confined in Phase 1; `pi` and `crush` are now wired the same way
+  (`makeJailedPi`/`makeJailedCrush` with `extraPkgs = sharedTools`), so all four
+  share the confinement profile and the tooling layer. The launcher's
+  per-agent config-dir handling covers all four (`RAGENT_AGENT=…`).
+- **Observability = the MACHINE log pane** tailing `.ragent/agent.log` (Phase 2),
+  with `jq` on PATH for pretty-printing. Deliberately *not* a unified/normalized
+  logger — the genesis conversation warned against building that before the loop
+  is solid.
+
+> Verification note (precise): opencode + Claude Code are verified running
+> confined, with their writable binds inspected (Phase 1). For `pi` and `crush` I
+> confirmed they **build, are bwrap-jailed, and carry all five shared tools**
+> (git-surgeon/git/ripgrep/fd/jq) on their in-jail PATH — but did **not**
+> bind-inspect their configPath writable binds (`~/.pi`, `~/.config/crush`) or run
+> per-agent negative controls. Their confinement is therefore **inferred** from
+> identical `makeJailed*` wiring + confirmed-jailed + the 8/8 base-profile probe,
+> not independently bind-inspected. (crush's llm-agents Go-module build is heavy,
+> ~12 min cold.)
 
 **Study first:** each agent's log/session format (pi stores sessions as trees;
 others differ) to judge whether a normalizer is worth it.
@@ -284,9 +305,26 @@ core loop warrants it — explicitly resisted.
 
 ---
 
-## Phase 5 — Open-source hardening  `TODO`
+## Phase 5 — Open-source hardening  `WIP`
 
 **Goal:** make the project safe and pleasant to fork and adopt.
+
+**Landed (pre-publish):**
+- **CI prepared (not run).** `flake.nix` `checks` build the jail (`jailed-probe`)
+  and `git-surgeon`; **`nix flake check` passed in the guest for `aarch64-linux`**
+  (it omitted the other systems). `.github/workflows/ci.yml` is **written but has
+  never executed** — there is no remote — and *would* run `nix flake check` + the
+  confinement gate + a docs-HTML-sync check on Linux.
+- **Governance docs** — `CONTRIBUTING.md`, `CHANGELOG.md`; `NOTICE`/`THIRD_PARTY`
+  updated (git-surgeon adopted; agents noted). License audit: still
+  reference-don't-vendor; no upstream code copied in.
+- **Deployment guide** — [running ragent on a VM](running-on-a-vm.md) (drop Lima;
+  run host-independently), which also removes the broad host-home mount.
+- The **worked example** is `templates/default` + the README "Try the workspace"
+  runbook (both verified: the template composes ragent as a pinned input).
+
+**Still gated on the owner:** publishing (public remote / push / tagged release)
+— explicitly not done without confirmation.
 
 **Tasks**
 1. `README` polish; a worked **example project** demonstrating the full loop.
