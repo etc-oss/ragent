@@ -72,13 +72,23 @@ and the crush/opencode/pi jails), the `jail.nix` combinator set, and
   to the user session, and a `MemoryMax=50M` `systemd-run --user --scope`
   OOM-killed an unbounded allocation instantly (not a timeout). `ragent-run.sh`'s
   mechanism bites.
+- **DNS works** inside the jail: `/etc/resolv.conf` is present and the shared net
+  namespace resolves and connects — a TCP connect to the LLM API host from inside
+  the jail succeeded. (An earlier "DNS fail" reading was a false negative: only
+  `bash`+`coreutils` are on the jail PATH, so `getent`/`grep` were "not found".)
+- **A real agent runs confined:** `jailed-opencode` builds (bun2nix; opencode
+  1.18.5, wrapping the prebuilt linux-arm64 binary, `bubblewrap` in the closure)
+  and runs inside its bwrap jail — `opencode --version` → `1.18.5`, rc 0. The
+  wrapper binds only opencode's XDG dirs (`~/.config`, `~/.local/share`,
+  `~/.cache`, `~/.local/state` under `opencode/`) + cwd + network. **Operational
+  note:** those XDG dirs must pre-exist or bwrap aborts with "Can't find source
+  path" — a launcher/runbook must `mkdir -p` them first.
 
 **Remaining in Phase 1:**
-- Build `jailed-opencode` (bun2nix) and run it confined; then dogfood
-  `jailed-claude-code`.
-- Fix jail DNS: the `network` combinator shares the net namespace but
-  `/etc/resolv.conf` is not bound, so the agent cannot yet resolve the LLM API
-  host — bind it (read-only) and forward the API key at runtime (ADR-0014).
+- A full agent-driven edit: run `jailed-opencode` on a real task with a
+  runtime-forwarded API key (ADR-0014) and review the diff — needs the owner's key.
+- Optional: dogfood `jailed-claude-code` (unfree; verify it builds) — the
+  recursive "Claude Code in its own jail" milestone.
 
 **Tasks**
 1. Stand up the long-lived Lima VM; confirm unprivileged user namespaces work
