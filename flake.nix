@@ -4,9 +4,11 @@
   # ---------------------------------------------------------------------------
   # The docs devshell runs anywhere (incl. the macOS host). The jail and the
   # Zellij workspace are Linux only (bubblewrap needs Linux namespaces), so all
-  # jail/workspace outputs are guarded to Linux systems and run inside a Lima
-  # guest (see lima/ragent.yaml). See docs/knowledge/components/forward-plan and
-  # ADRs 0013–0017.
+  # jail/workspace outputs are guarded to Linux systems and run inside a Linux
+  # guest. The concrete VM config (Lima / cloud / NixOS) lives in a personal
+  # config repo that consumes ragent — e.g. your-config-repo — see
+  # docs/knowledge/components/running-on-a-vm.md. See also the forward plan and
+  # ADRs 0012–0017.
   #
   # Reference, don't vendor (ADR-0003): upstreams are pinned inputs; their source
   # is never copied into this repo. jail.nix is GPL-3.0 — referencing it keeps
@@ -52,7 +54,7 @@
           shellHook = ''
             echo "ragent docs devshell."
             echo "  Render docs:  python3 tools/okf_render.py   (-> docs/html/)"
-            echo "  Jail/workspace: Linux only — run inside the Lima guest (lima/ragent.yaml)."
+            echo "  Jail/workspace: Linux only — run in a Linux guest (VM config in your config repo, e.g. your-config-repo)."
           '';
         };
 
@@ -184,12 +186,9 @@
         description = "A per-project ragent workspace that consumes ragent as a flake input.";
       };
 
-      # A declarative ragent dev box (Option B of the running-on-a-vm guide): the
-      # provisioning becomes NixOS options. Build/deploy with, e.g.,
-      #   nixos-rebuild switch --flake .#ragent   (or nixos-generators / nixos-anywhere)
-      nixosConfigurations.ragent = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = [ ./nixos/ragent-box.nix ];
-      };
+      # VM/deployment specifics (Lima config, cloud provisioning, and the
+      # declarative NixOS box) live in a personal config repo that consumes ragent
+      # — e.g. your-config-repo — not in the framework. See ADR-0012 and
+      # docs/knowledge/components/running-on-a-vm.md.
     };
 }

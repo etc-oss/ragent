@@ -22,7 +22,7 @@ set -uo pipefail
 
 if [ "$(uname -s)" != "Linux" ]; then
   echo "This test must run inside the Linux guest (bubblewrap needs Linux)." >&2
-  echo "  limactl start --name=ragent lima/ragent.yaml && limactl shell ragent" >&2
+  echo "  start your Linux guest (VM config in your config repo, e.g. your-config-repo), then: limactl shell <vm>" >&2
   exit 2
 fi
 

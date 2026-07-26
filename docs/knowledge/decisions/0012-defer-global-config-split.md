@@ -11,6 +11,10 @@ timestamp: 2026-07-26
 
 # ADR-0012 — Defer splitting out a consumable global-config repo
 
+> **Realized:** the split was executed after Phases 0–5 as **your-config-repo** —
+> see [ADR-0018](0018-split-your-config-repo.md). This ADR remains the record of
+> the deferral decision.
+
 ## Context and problem statement
 
 In the genesis conversation, "ragent" is used in two senses: (1) the umbrella

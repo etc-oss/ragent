@@ -11,8 +11,8 @@ template. ragent is an open-source, forkable AI-coding workspace: confined agent
    ```
    ragent.url = "git+file:///absolute/path/to/ragent";
    ```
-2. Run inside a Linux guest (bubblewrap needs Linux) — e.g. the Lima VM from
-   ragent's `lima/ragent.yaml`. `nix flake lock` to pin.
+2. Run inside a Linux guest (bubblewrap needs Linux) — e.g. a Lima VM whose config
+   lives in a config repo like your-config-repo. `nix flake lock` to pin.
 
 ## Use
 

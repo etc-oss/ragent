@@ -22,8 +22,9 @@ with human oversight, on Zellij + Lima. Contributions are welcome.
 
 - Docs + tooling on any host (incl. macOS): `nix develop` gives Python + git.
   Render the knowledge view with `python3 tools/okf_render.py`.
-- The jail and workspace need **Linux** (bubblewrap): use the Lima guest
-  (`lima/ragent.yaml`) — see the README's "Try the workspace".
+- The jail and workspace need **Linux** (bubblewrap): use a Linux guest — the VM
+  config lives in a personal config repo like your-config-repo (see the README's
+  "Try the workspace").
 
 ## Before you open a PR
 

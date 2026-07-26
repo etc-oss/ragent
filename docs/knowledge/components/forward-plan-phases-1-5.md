@@ -53,8 +53,8 @@ and the crush/opencode/pi jails), the `jail.nix` combinator set, and
   proof), `jailed-opencode`, and `jailed-claude-code`, Linux-guarded; `flake.lock`
   updated.
 - `tools/confinement-test.sh` (negative-control gate), `tools/ragent-run.sh`
-  (cgroup launcher), and `lima/ragent.yaml` (guest with user namespaces + cgroup
-  delegation).
+  (cgroup launcher), and the Lima guest config (now in your-config-repo) with user
+  namespaces + cgroup delegation.
 - **Verified on macOS (smoke test):** the darwin devshell and the `aarch64-linux`
   `jailed-probe` both evaluate/instantiate. The agent derivations use IFD
   (bun2nix) and must build in the guest — not eval on macOS.
@@ -229,9 +229,10 @@ points (for the "capabilities as files" path).
   pinned input (local-override eval → `nix-shell`), and the packaged app sets up
   the clone/metadata headlessly.
 
-**Remaining:** extract the consumable `ragent-config` repo — **deferred by owner
-decision** ([ADR-0012](../decisions/0012-defer-global-config-split.md)) until the
-global-vs-workspace boundary is clear.
+**Done:** the consumable config repo — **your-config-repo** — was extracted after
+Phase 5 ([ADR-0018](../decisions/0018-split-your-config-repo.md), realizing
+[ADR-0012](../decisions/0012-defer-global-config-split.md)); it consumes ragent as
+a pinned input, and the VM/deployment specifics moved there first.
 
 **Tasks**
 1. Pin the specific `git-surgeon` and put it (and other shared CLIs) on `PATH`

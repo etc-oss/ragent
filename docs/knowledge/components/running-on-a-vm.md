@@ -9,6 +9,11 @@ timestamp: 2026-07-26
 
 # Running ragent on a VM instead of the host
 
+> **Note:** the concrete VM artifacts (`lima/`, `deploy/`, `nixos/`) now live in a
+> personal config repo — **your-config-repo** — that consumes ragent, not in the
+> framework ([ADR-0012](../decisions/0012-defer-global-config-split.md)). Paths
+> below naming `lima/ragent.yaml`, `deploy/`, or `nixos/` refer to that repo.
+
 ## Why this comes up
 
 Today the stack is `macOS host → Lima Linux guest → jail.nix → agent`
@@ -31,9 +36,8 @@ A persistent Linux box (Hetzner / EC2 / GCE / DigitalOcean, or a local
 UTM/Proxmox/VirtualBox VM). One-time provision, then it *is* your ragent
 environment; you SSH in from anywhere.
 
-Provisioning is exactly the three steps already encoded in
-[`lima/ragent.yaml`](../../../lima/ragent.yaml), portable to cloud-init or a
-shell script:
+Provisioning is exactly the three steps already encoded in your-config-repo's
+`lima/ragent.yaml`, portable to cloud-init or a shell script:
 
 1. **Unprivileged user namespaces on** (bubblewrap): `kernel.apparmor_restrict_unprivileged_userns=0` (Ubuntu 24.04) — persist in `/etc/sysctl.d/`.
 2. **cgroup delegation** (the caps, [ADR-0015](../decisions/0015-cgroup-caps-systemd-run.md)): a `Delegate=cpu memory pids` drop-in for `user@.service`.
@@ -52,9 +56,9 @@ export ANTHROPIC_API_KEY=...       # forwarded into the jail at runtime (ADR-001
 No Lima, no host-home mount. The jail confines the agent to its clone *inside the
 VM*; the VM confines everything to itself.
 
-**Implemented:** [`deploy/cloud-init.yaml`](../../../deploy/cloud-init.yaml) (cloud
-user-data) and [`deploy/provision.sh`](../../../deploy/provision.sh) (an existing
-box) — the same three steps as `lima/ragent.yaml`, shellcheck-clean.
+**Implemented in your-config-repo:** `deploy/cloud-init.yaml` (cloud user-data) and
+`deploy/provision.sh` (an existing box) — the same three steps as
+`lima/ragent.yaml`, shellcheck-clean.
 
 ### B. A NixOS / microvm.nix VM — most reproducible
 
@@ -67,10 +71,10 @@ three provisioning steps above become a few NixOS options
 `nix.settings.experimental-features`). Best long-term home for the project; more
 upfront Nix work.
 
-**Implemented:** `nixosConfigurations.ragent` (from
-[`nixos/ragent-box.nix`](../../../nixos/ragent-box.nix)) — evaluates to a complete
-bootable system (`nix build .#nixosConfigurations.ragent.config.system.build.toplevel`,
-or an image via nixos-generators). microvm.nix (VM-per-agent) is the noted next step.
+**Implemented in your-config-repo:** `nixosConfigurations.your-config-repo` (from its
+`nixos/ragent-box.nix`) — evaluates to a complete bootable system
+(`nix build .#nixosConfigurations.your-config-repo.config.system.build.toplevel`, or
+an image via nixos-generators). microvm.nix (VM-per-agent) is the noted next step.
 
 ### C. Keep Lima, but drive from *inside* the guest — smallest change
 
@@ -116,7 +120,7 @@ only macOS-coupled piece is Lima itself — which options A and B drop.
 | Isolation | bwrap in a shared-kernel VM (today's model). | Can add **VM-per-agent** (microVM) — stronger than bwrap, the [ADR-0002](../decisions/0002-jail-nix-confinement.md) "microvm.nix future" and pi's Gondolin pattern. |
 | On a **Mac** | Clean: macOS → one cloud/local Linux VM. | Nests again: macOS → Linux host → microVM, **unless** you use a cloud Linux box or a Linux workstation. |
 | Debugging | Familiar Linux ops. | Nix-shaped errors; steeper. |
-| Could be a flake output | No (external box). | **Yes** — `nixosConfigurations.ragent` / a microvm, so the flake spins up the *whole* environment. |
+| Could be a flake output | No (external box). | **Yes** — `nixosConfigurations` / a microvm, so the flake spins up the *whole* environment. |
 
 ## Recommendation
 

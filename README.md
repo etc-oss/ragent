@@ -88,11 +88,15 @@ generated and must never be hand-edited.
 
 ## Try the workspace (Linux guest)
 
-The jail and workspace run on Linux; from macOS/Windows use the bundled Lima VM.
+The jail and workspace run on Linux. The concrete VM config (Lima / cloud /
+NixOS) lives in a personal config repo that consumes ragent — e.g.
+**your-config-repo** — not in the framework (see
+[running on a VM](docs/knowledge/components/running-on-a-vm.md)).
 
 ```sh
-# 1) one-time: a Nix-enabled guest with user namespaces + cgroup delegation
-limactl start --name=ragent lima/ragent.yaml
+# 1) one-time: a Nix-enabled Linux guest (user namespaces + cgroup delegation).
+#    Its config lives in your config repo, e.g. your-config-repo's lima/ragent.yaml:
+limactl start --name=ragent /path/to/your-config-repo/lima/ragent.yaml
 limactl shell ragent
 
 # 2) inside the guest, on a git project (this repo works):
