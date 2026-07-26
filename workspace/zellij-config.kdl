@@ -1,0 +1,3 @@
+// Pastel workspace theme — Catppuccin Mocha (a Zellij built-in theme).
+// Applied by tools/ragent-workspace.sh via `zellij --config`.
+theme "catppuccin-mocha"

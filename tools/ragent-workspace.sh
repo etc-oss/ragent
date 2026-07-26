@@ -19,6 +19,10 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # fall back to repo-relative paths when run from a checkout.
 LAYOUT="${RAGENT_LAYOUT:-$REPO/workspace/ragent-workspace.kdl}"
 RAGENT_RUN="${RAGENT_RUN_BIN:-$REPO/tools/ragent-run.sh}"
+# Pastel theming (Catppuccin Mocha): Zellij via --config, lazygit via LG_CONFIG_FILE,
+# neovim via the flake's catppuccin config. Overridable for a different config repo.
+ZJ_CONFIG="${RAGENT_ZELLIJ_CONFIG:-$REPO/workspace/zellij-config.kdl}"
+export LG_CONFIG_FILE="${RAGENT_LAZYGIT_CONFIG:-$REPO/workspace/lazygit-catppuccin.yml}"
 
 MAIN="$(cd "${1:?usage: ragent-workspace.sh <project-dir> [task]}" && pwd)"
 TASK="${2:-task}"
@@ -101,9 +105,9 @@ SESSION="ragent-$TASK"
 if zellij list-sessions 2>/dev/null | sed 's/\x1b\[[0-9;?]*[a-zA-Z]//g' \
      | grep -qE "(^|[[:space:]])${SESSION}([[:space:]]|\$)"; then
   echo "session '$SESSION' exists — attaching (detach with Ctrl+o d)…"
-  exec zellij attach "$SESSION"
+  exec zellij --config "$ZJ_CONFIG" attach "$SESSION"
 fi
 echo "launching Zellij workspace '$SESSION' (detach with Ctrl+o d; quit with Ctrl+q)…"
 # --new-session-with-layout starts a NEW session with this layout. (Plain
 # --layout with --session would instead add tabs to an EXISTING session.)
-exec zellij --session "$SESSION" --new-session-with-layout "$LAYOUT"
+exec zellij --config "$ZJ_CONFIG" --session "$SESSION" --new-session-with-layout "$LAYOUT"
