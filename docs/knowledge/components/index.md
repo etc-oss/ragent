@@ -21,3 +21,5 @@ Architecture concepts and planning.
   — the verbatim pre-Phase-0 flake the starter builds toward.
 - [COMP-running-on-a-vm — Running ragent on a VM instead of the host](running-on-a-vm.md)
   — how to drop the Lima layer and run host-independently (cloud / NixOS VM).
+- [COMP-phase6-remote-async-review — Phase 6 (proposed): remote access & async web review](phase6-remote-and-async-review.md)
+  — evaluation of Zellij remote sessions + a server-backed diff-review surface.
