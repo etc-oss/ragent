@@ -146,11 +146,15 @@
         workspaceApp = pkgs.writeShellApplication {
           name = "ragent-workspace";
           runtimeInputs = workspaceTools ++ allAgents;
+          # Provide ragent's defaults but DON'T clobber a consumer's overrides
+          # (e.g. your-config-repo sets RAGENT_ZELLIJ_CONFIG / RAGENT_AGENT). The
+          # ''${VAR:-default} form emits a literal shell parameter-expansion while
+          # still interpolating the store-path default.
           text = ''
-            export RAGENT_LAYOUT=${./workspace/ragent-workspace.kdl}
-            export RAGENT_RUN_BIN=${./tools/ragent-run.sh}
-            export RAGENT_ZELLIJ_CONFIG=${./workspace/zellij-config.kdl}
-            export RAGENT_LAZYGIT_CONFIG=${./workspace/lazygit-catppuccin.yml}
+            export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${./workspace/ragent-workspace.kdl}}"
+            export RAGENT_RUN_BIN="''${RAGENT_RUN_BIN:-${./tools/ragent-run.sh}}"
+            export RAGENT_ZELLIJ_CONFIG="''${RAGENT_ZELLIJ_CONFIG:-${./workspace/zellij-config.kdl}}"
+            export RAGENT_LAZYGIT_CONFIG="''${RAGENT_LAZYGIT_CONFIG:-${./workspace/lazygit-catppuccin.yml}}"
             exec ${./tools/ragent-workspace.sh} "$@"
           '';
         };
