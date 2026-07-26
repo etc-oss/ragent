@@ -132,6 +132,30 @@ headless):
   Re-running `ragent-workspace.sh` on the same task now **attaches** to an
   existing session instead of erroring.
 
+## Forking ragent into another project
+
+Don't fork the repo, and **don't manage dependencies with a Makefile.** Adopt
+ragent as a **pinned flake input** so you get reproducible dependencies and can
+update with a one-line bump ([ADR-0019](docs/knowledge/decisions/0019-per-project-forking-and-dependencies.md)):
+
+```sh
+cd my-project                      # a git repo
+nix flake init -t <ragent>#default # drops a small flake.nix consuming ragent
+echo "use flake" > .envrc && direnv allow   # optional: auto-load the env
+nix develop                        # zellij, nvim, lazygit, git-surgeon, agents
+nix run .#workspace -- "$PWD" mytask
+```
+
+- **Dependencies live in `flake.lock`** (content-pinned, offline-capable via
+  [ADR-0010](docs/knowledge/decisions/0010-local-mirror-resilience.md)), updated
+  deliberately with `nix flake update` — *not* in a Makefile.
+- **A Makefile is fine only as a thin task-runner** that delegates to nix
+  (`make review` → `nix run .#workspace`); never as the dependency manager.
+- **Want personal defaults** (a default agent, extra tools, an IDE nvim, a theme)?
+  Consume a personal config repo like
+  [your-config-repo](docs/knowledge/decisions/0018-split-your-config-repo.md)
+  instead of ragent directly — it composes ragent and adds your opinions.
+
 ## License & attribution
 
 ragent's own code is licensed under [Apache-2.0](LICENSE)
