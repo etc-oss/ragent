@@ -95,12 +95,20 @@ and the crush/opencode/pi jails), the `jail.nix` combinator set, and
   [ADR-0014](../decisions/0014-runtime-env-secret-forwarding.md) flags: when
   wiring real auth, decide deliberately (env-forward the key vs. accept the bound
   auth dir).
+- **Dogfood — Claude Code in its own jail (the recursive milestone):**
+  `jailed-claude-code` builds (claude-code 2.1.220, unfree; `socat`/`bubblewrap`
+  in the closure) and runs confined — `--version` → `2.1.220`, rc 0, both directly
+  and via `ragent-run.sh`. Bind list inspected: only `$PWD`, `~/.claude` (dir),
+  and `~/.claude.json` (file) are real+writable; `~`/`/tmp` tmpfs, all else
+  `--ro-bind`. `~/.claude.json` holds Claude Code's credentials and is bound
+  **read-write** — the ADR-0014 tension in its sharpest form. Launcher note:
+  `~/.claude.json` is a **file** bind source, so `RAGENT_PRECREATE_DIRS`
+  (mkdir-only) does not cover it — file bind sources need separate creation.
 
 **Remaining in Phase 1:**
-- A full agent-driven edit: run `jailed-opencode` on a real task with a
-  runtime-forwarded API key (ADR-0014) and review the diff — needs the owner's key.
-- Optional: dogfood `jailed-claude-code` (unfree; verify it builds) — the
-  recursive "Claude Code in its own jail" milestone.
+- A full agent-driven edit: run a jailed agent (opencode or Claude Code) on a real
+  editing task with runtime-forwarded auth (ADR-0014) and review the diff — needs
+  the owner's provider key. This is the last piece of the Phase 1 dogfood.
 
 **Tasks**
 1. Stand up the long-lived Lima VM; confirm unprivileged user namespaces work

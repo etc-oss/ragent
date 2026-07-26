@@ -54,13 +54,19 @@ jail — which quietly re-imports the very secret the zero-trust jail excludes.
 
 ## Phase 1 finding (opencode)
 
-Inspecting `jailed-opencode`'s actual bwrap bind list shows jailed-agents'
-`makeJailedOpencode` binds `~/.local/share/opencode` **read-write** into the jail
-— and opencode persists its auth there. So its default profile is in direct
-tension with this ADR. **Unresolved** (no real auth wired yet): when wiring
-opencode auth, either env-forward the provider key and drop/override that bind,
-or consciously accept that opencode's credentials live in the real
-`~/.local/share/opencode`. Decide deliberately at that point.
+Inspecting the agents' actual bwrap bind lists shows jailed-agents' builders bind
+credential-bearing paths **read-write** into the jail — in direct tension with
+this ADR:
+
+- **opencode** binds `~/.local/share/opencode` (rw), where it persists auth.
+- **Claude Code** binds `~/.claude` (rw) and `~/.claude.json` (rw) — and
+  `~/.claude.json` is literally where Claude Code stores its credentials, so this
+  is the tension in its sharpest form.
+
+**Unresolved** (no real auth wired yet): when wiring an agent's auth, either
+env-forward the provider key and drop/override the credential-dir bind, or
+consciously accept that the agent's credentials live in the real home path.
+Decide deliberately at that point, per agent.
 
 ## Links
 - [Genesis session](../sessions/0001-genesis-architecture-conversation.md)
