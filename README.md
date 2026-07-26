@@ -116,6 +116,17 @@ headless):
 - **Ergonomics** — confirm truecolor, clipboard copy/paste, and that Zellij's
   keybindings don't collide with your terminal (avoid nesting tmux). These are the
   [ADR-0005](docs/knowledge/decisions/0005-zellij-two-pane-layout.md) papercuts.
+- **Sessions / a "frozen" TUI** — a frozen or garbled screen is almost always a
+  bad `TERM` (e.g. `dumb`, which `limactl shell` can pass through). The launcher
+  now forces `xterm-256color`, but use a truecolor terminal (iTerm2 / kitty /
+  WezTerm). Manage sessions independently of a launch:
+  ```sh
+  nix run .#zellij -- list-sessions
+  nix run .#zellij -- attach ragent-mytask          # re-attach after Ctrl+o d
+  nix run .#zellij -- kill-session ragent-mytask     # or delete-all-sessions --yes
+  ```
+  Re-running `ragent-workspace.sh` on the same task now **attaches** to an
+  existing session instead of erroring.
 
 ## License & attribution
 

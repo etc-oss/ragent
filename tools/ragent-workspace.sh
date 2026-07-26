@@ -91,7 +91,19 @@ if [ -n "${RAGENT_NO_LAUNCH:-}" ]; then
   exit 0
 fi
 
-echo "launching Zellij workspace…"
+# Zellij cannot render on a dumb/unset terminal (a common cause of an apparently
+# frozen TUI, e.g. under `limactl shell` which may pass TERM=dumb). Force a sane one.
+case "${TERM:-}" in "" | dumb) export TERM=xterm-256color ;; esac
+
+SESSION="ragent-$TASK"
+# If the session already exists (e.g. you detached with Ctrl+o d), ATTACH to it
+# rather than trying to recreate it; otherwise start it fresh with the layout.
+if zellij list-sessions 2>/dev/null | sed 's/\x1b\[[0-9;?]*[a-zA-Z]//g' \
+     | grep -qE "(^|[[:space:]])${SESSION}([[:space:]]|\$)"; then
+  echo "session '$SESSION' exists — attaching (detach with Ctrl+o d)…"
+  exec zellij attach "$SESSION"
+fi
+echo "launching Zellij workspace '$SESSION' (detach with Ctrl+o d; quit with Ctrl+q)…"
 # --new-session-with-layout starts a NEW session with this layout. (Plain
 # --layout with --session would instead add tabs to an EXISTING session.)
-exec zellij --session "ragent-$TASK" --new-session-with-layout "$LAYOUT"
+exec zellij --session "$SESSION" --new-session-with-layout "$LAYOUT"

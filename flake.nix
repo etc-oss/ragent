@@ -151,7 +151,12 @@
         devShells.default = docsShell;
       }
       // lib.optionalAttrs isLinux {
-        packages = { inherit jailed-probe jailed-opencode jailed-claude-code jailed-pi jailed-crush git-surgeon; };
+        packages = {
+          inherit jailed-probe jailed-opencode jailed-claude-code jailed-pi jailed-crush git-surgeon;
+          # Zellij itself, unconfined, for session management (attach/detach/list/
+          # kill) independent of a workspace launch: `nix run .#zellij -- <args>`.
+          zellij = pkgs.zellij;
+        };
         devShells = { default = docsShell; workspace = workspaceShell; };
         apps.workspace = {
           type = "app";
