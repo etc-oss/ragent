@@ -1,3 +1,20 @@
-// Pastel workspace theme — Catppuccin Mocha (a Zellij built-in theme).
+// Neon/pastel workspace theme — Tokyo Night Storm, with green remapped to neon
+// cyan so the pane chrome (frames, tabs, status bar) shows NO explicit green.
 // Applied by tools/ragent-workspace.sh via `zellij --config`.
-theme "catppuccin-mocha"
+themes {
+    ragent-neon {
+        fg "#c0caf5"
+        bg "#24283b"
+        black "#1d202f"
+        red "#f7768e"
+        green "#7dcfff"     // neutralized: neon cyan instead of green
+        yellow "#e0af68"
+        blue "#7aa2f7"
+        magenta "#bb9af7"
+        cyan "#7dcfff"
+        white "#c0caf5"
+        orange "#ff9e64"
+    }
+}
+theme "ragent-neon"
+pane_frames true

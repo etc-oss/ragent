@@ -32,8 +32,8 @@ ragent framework are the **VM / deployment specifics**:
   box (Option B).
 
 ragent keeps the shareable framework: the jail, the workspace mechanism, the
-agents, the shared-tools layer, the knowledge system, and the Catppuccin theme as
-a default. your-config-repo composes ragent's `workspace` devshell/app and adds
+agents, the shared-tools layer, the knowledge system, and the neon/pastel Tokyo
+Night theme as a default. your-config-repo composes ragent's `workspace` devshell/app and adds
 personal specifics (the VM config now; agent choices / extra tools / theme
 overrides later).
 

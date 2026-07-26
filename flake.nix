@@ -106,14 +106,21 @@
         lspServers = [ pkgs.nixd pkgs.basedpyright pkgs.bash-language-server ];
         ragentNvim = pkgs.neovim.override {
           configure = {
-            packages.ragent.start = [ pkgs.vimPlugins.nvim-lspconfig pkgs.vimPlugins.catppuccin-nvim ];
+            packages.ragent.start = [ pkgs.vimPlugins.nvim-lspconfig pkgs.vimPlugins.tokyonight-nvim ];
             customRC = ''
               set number
               set termguicolors
               lua << LUAEOF
-              -- Catppuccin Mocha (pastel) theme.
-              require('catppuccin').setup({ flavour = 'mocha' })
-              vim.cmd.colorscheme('catppuccin')
+              -- Tokyo Night (neon/pastel, VS-Code-adjacent) with greens neutralized
+              -- to neon cyan/teal — no explicit greens in the palette.
+              require('tokyonight').setup({
+                style = 'storm',
+                on_colors = function(c)
+                  c.green = '#7dcfff'; c.green1 = '#7dcfff'; c.green2 = '#89ddff'
+                  c.teal = '#2ac3de'
+                end,
+              })
+              vim.cmd.colorscheme('tokyonight-storm')
 
               -- nvim 0.11+ LSP API; nvim-lspconfig supplies the server defs on
               -- the runtimepath (its lsp/*.lua), so no deprecated framework call.
@@ -154,7 +161,7 @@
             export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${./workspace/ragent-workspace.kdl}}"
             export RAGENT_RUN_BIN="''${RAGENT_RUN_BIN:-${./tools/ragent-run.sh}}"
             export RAGENT_ZELLIJ_CONFIG="''${RAGENT_ZELLIJ_CONFIG:-${./workspace/zellij-config.kdl}}"
-            export RAGENT_LAZYGIT_CONFIG="''${RAGENT_LAZYGIT_CONFIG:-${./workspace/lazygit-catppuccin.yml}}"
+            export RAGENT_LAZYGIT_CONFIG="''${RAGENT_LAZYGIT_CONFIG:-${./workspace/lazygit-theme.yml}}"
             exec ${./tools/ragent-workspace.sh} "$@"
           '';
         };
