@@ -177,5 +177,13 @@
         path = ./templates/default;
         description = "A per-project ragent workspace that consumes ragent as a flake input.";
       };
+
+      # A declarative ragent dev box (Option B of the running-on-a-vm guide): the
+      # provisioning becomes NixOS options. Build/deploy with, e.g.,
+      #   nixos-rebuild switch --flake .#ragent   (or nixos-generators / nixos-anywhere)
+      nixosConfigurations.ragent = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [ ./nixos/ragent-box.nix ];
+      };
     };
 }

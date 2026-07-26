@@ -52,6 +52,10 @@ export ANTHROPIC_API_KEY=...       # forwarded into the jail at runtime (ADR-001
 No Lima, no host-home mount. The jail confines the agent to its clone *inside the
 VM*; the VM confines everything to itself.
 
+**Implemented:** [`deploy/cloud-init.yaml`](../../../deploy/cloud-init.yaml) (cloud
+user-data) and [`deploy/provision.sh`](../../../deploy/provision.sh) (an existing
+box) — the same three steps as `lima/ragent.yaml`, shellcheck-clean.
+
 ### B. A NixOS / microvm.nix VM — most reproducible
 
 Bake the provisioning (namespaces, delegation, Nix, the workspace) into a
@@ -62,6 +66,11 @@ three provisioning steps above become a few NixOS options
 (`security.unprivilegedUsernsClone`, `systemd.services."user@".serviceConfig.Delegate`,
 `nix.settings.experimental-features`). Best long-term home for the project; more
 upfront Nix work.
+
+**Implemented:** `nixosConfigurations.ragent` (from
+[`nixos/ragent-box.nix`](../../../nixos/ragent-box.nix)) — evaluates to a complete
+bootable system (`nix build .#nixosConfigurations.ragent.config.system.build.toplevel`,
+or an image via nixos-generators). microvm.nix (VM-per-agent) is the noted next step.
 
 ### C. Keep Lima, but drive from *inside* the guest — smallest change
 

@@ -1,0 +1,21 @@
+#cloud-config
+# ragent dev box (Option A) — pass as user-data to a fresh Ubuntu/Debian cloud VM
+# (Hetzner / EC2 / GCE / DigitalOcean). Same three steps as lima/ragent.yaml.
+# After boot, SSH in: `git clone <ragent> && cd ragent && nix run .#workspace -- "$PWD" task`.
+
+write_files:
+  # 1) unprivileged user namespaces (bubblewrap prerequisite)
+  - path: /etc/sysctl.d/99-ragent-userns.conf
+    content: |
+      kernel.apparmor_restrict_unprivileged_userns=0
+  # 2) cgroup delegation for the user session (caps — ADR-0015)
+  - path: /etc/systemd/system/user@.service.d/delegate.conf
+    content: |
+      [Service]
+      Delegate=cpu cpuset io memory pids
+
+runcmd:
+  - [ sysctl, --system ]
+  - [ systemctl, daemon-reload ]
+  # 3) Nix with flakes (Determinate installer; multi-user, flakes on by default)
+  - sh -c 'command -v nix >/dev/null || curl -fsSL https://install.determinate.systems/nix | sh -s -- install --no-confirm'
