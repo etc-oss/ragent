@@ -27,11 +27,14 @@ and [the forward plan](docs/knowledge/components/forward-plan-phases-1-5.md).
 ## Project status
 
 - **Phase 0 (scaffold + governance): done.**
-- **Phase 1 (the jail, one agent): in progress.** Host-side artifacts have landed
-  — `flake.nix` wires `jailed-agents` + a jail.nix confinement probe, plus
-  `tools/confinement-test.sh`, `tools/ragent-run.sh`, and `lima/ragent.yaml`. The
-  real exit gate (negative-control test) runs inside the Linux guest. See the
-  forward plan and ADRs 0013–0015.
+- **Phase 1 (the jail, one agent): confinement core done.** Verified in a Lima
+  guest — probe 8/8, cgroup caps enforce, DNS works, and both opencode and Claude
+  Code build and run confined. A full agent-driven *edit* needs a provider key
+  (ADR-0014). See ADRs 0013–0015.
+- **Phase 2 (the Zellij workspace): in progress.** The `workspace` devshell and
+  KDL layout load in-guest, and the clone review boundary (ADR-0016) is verified;
+  interactive terminal usability (colors/clipboard/keys) is human-verified-later.
+  See ADRs 0005, 0011, 0016.
 
 The build is intentionally a vertical slice: scaffold and plan now, implement
 incrementally afterward. Do not try to build everything at once.

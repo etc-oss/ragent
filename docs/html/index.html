@@ -41,7 +41,7 @@ border-radius:8px;padding:.8rem 1rem}.card .t{font-weight:600}.card .d{color:var
 
 <h1>ragent knowledge bundle</h1>
 <p>Generated view of the <code>docs/knowledge/</code> OKF bundle. <a href="graph.html">Open the knowledge graph &rarr;</a></p>
-<p class="gen">29 concepts (2 session, 15 decision, 4 component, 3 convention, 5 index).</p>
+<p class="gen">30 concepts (2 session, 16 decision, 4 component, 3 convention, 5 index).</p>
 <h2>session</h2><div class="cards">
 <div class="card"><div class="t"><a href="sessions/0001-genesis-architecture-conversation.html">Genesis: AI-powered Zellij workspace with human-machine panes</a></div><div class="d">The verbatim design conversation that originated ragent — architecture brief, peer-review evaluation, the development-and-open-sourcing roadmap, and model introspection.</div></div>
 <div class="card"><div class="t"><a href="sessions/0002-phase0-bootstrap-prompt.html">Phase 0 bootstrap prompt (verbatim)</a></div><div class="d">The exact prompt handed to Claude Code (Opus) to execute the Phase 0 bootstrap of ragent.</div></div>
@@ -62,6 +62,7 @@ border-radius:8px;padding:.8rem 1rem}.card .t{font-weight:600}.card .d{color:var
 <div class="card"><div class="t"><a href="decisions/0013-jailed-agents-opencode-first.html">Build the jail on jailed-agents; prove confinement with a probe; opencode first</a></div><div class="d">Consume jailed-agents as a pinned input, prove confinement with a jail.nix shell probe (not the agent), and lead with opencode; keep makeJailedClaudeCode as a verified dogfood target.</div></div>
 <div class="card"><div class="t"><a href="decisions/0014-runtime-env-secret-forwarding.html">Provider API key via runtime env forwarding; no credential dir in the jail</a></div><div class="d">The LLM API key is forwarded into the jail at runtime via jail.nix fwd-env and never enters the Nix store; no credential-bearing config dir is bound into the jail.</div></div>
 <div class="card"><div class="t"><a href="decisions/0015-cgroup-caps-systemd-run.html">cgroup resource caps via an external systemd-run scope</a></div><div class="d">Impose CPU/memory/PID caps on the jailed agent with a transient systemd scope, since jail.nix isolates the cgroup namespace but does not set resource limits.</div></div>
+<div class="card"><div class="t"><a href="decisions/0016-agent-clone-not-worktree.html">Agent works in a self-contained clone, not a git worktree</a></div><div class="d">The machine side operates in a full git clone (its own .git inside the jail bind); a worktree&#x27;s object store lies outside the cwd bind and breaks in-jail git.</div></div>
 </div>
 <h2>component</h2><div class="cards">
 <div class="card"><div class="t"><a href="components/architecture-overview.html">Architecture overview</a></div><div class="d">The layered architecture of ragent — host, VM, jail, the two Zellij panes, the tooling layer, and the knowledge layer — and how the seed decisions fit together.</div></div>

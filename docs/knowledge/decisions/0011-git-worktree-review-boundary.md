@@ -3,7 +3,7 @@ type: decision
 id: ADR-0011
 title: Git-worktree review boundary for human oversight
 description: The agent proposes changes on a dedicated branch/worktree that the human reviews before landing; push/deploy secrets stay on the human side.
-status: proposed
+status: accepted
 date: 2026-07-26
 tags: [oversight, git, worktree, secrets, review]
 timestamp: 2026-07-26
@@ -19,21 +19,24 @@ not *oversight*. The whole point of the workspace is human review of machine
 work. We need a boundary where a human sees and approves diffs before they land,
 and where deploy/push credentials never enter the jail.
 
-## Decision (proposed)
+## Decision
 
 Give human review a **git boundary**, not just a filesystem one:
 
-- The agent operates on an `agent/<task>` branch or a dedicated **git
-  worktree**.
+- The agent operates on an `agent/<task>` branch in its own checkout. **Mechanism
+  refinement ([ADR-0016](0016-agent-clone-not-worktree.md)):** that checkout is a
+  self-contained **clone**, not a git worktree — a worktree's object store lies
+  outside the jail's cwd bind, so in-jail git would fail. The clone keeps all git
+  inside the jail while confinement stays scoped to the clone dir.
 - The human pane (lazygit/neovim) reviews diffs on the main tree before anything
   is merged.
 - **Secrets split by side:** push/deploy credentials live on the *human* side;
   the machine may only *propose* commits. The LLM API key is bound explicitly
   into the jail; git push credentials never enter it.
 
-Status is **proposed** — to be validated when Phases 1–2 build the real loop.
-pi's "Gondolin" pattern (auth on host, agent tools in a micro-VM) is an
-inverted precedent worth studying during validation.
+Accepted and being implemented in Phase 2 via the clone mechanism
+([ADR-0016](0016-agent-clone-not-worktree.md)). pi's "Gondolin" pattern (auth on
+host, agent tools in a micro-VM) is an inverted precedent worth studying.
 
 ## Consequences
 

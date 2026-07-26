@@ -2,12 +2,11 @@
   description = "ragent — a forkable AI-coding workspace: confined agents (jail.nix) with human oversight, on Zellij + Lima.";
 
   # ---------------------------------------------------------------------------
-  # Phase 1 flake — the jail, one agent.
-  #
-  # The docs devshell runs anywhere (incl. the macOS host). The jail is Linux
-  # only (bubblewrap needs Linux namespaces), so all jail outputs are guarded to
-  # Linux systems and are meant to run inside a Lima guest (see lima/ragent.yaml).
-  # See docs/knowledge/components/forward-plan-phases-1-5.md and ADRs 0013–0015.
+  # The docs devshell runs anywhere (incl. the macOS host). The jail and the
+  # Zellij workspace are Linux only (bubblewrap needs Linux namespaces), so all
+  # jail/workspace outputs are guarded to Linux systems and run inside a Lima
+  # guest (see lima/ragent.yaml). See docs/knowledge/components/forward-plan and
+  # ADRs 0013–0016.
   #
   # Reference, don't vendor (ADR-0003): upstreams are pinned inputs; their source
   # is never copied into this repo. jail.nix is GPL-3.0 — referencing it keeps
@@ -25,9 +24,7 @@
     # Machine-side confinement. GPL-3.0; referenced, not vendored.
     jail-nix.url = "sourcehut:~alexdavid/jail.nix";
 
-    # Jails for LLM agents built on jail.nix (exports makeJailedOpencode,
-    # makeJailedClaudeCode, makeJailedPi, …). Pins jail.nix transitively; we also
-    # pin jail.nix directly for the low-level confinement probe below.
+    # Jails for LLM agents built on jail.nix (makeJailedOpencode / …ClaudeCode / …Pi).
     jailed-agents.url = "github:andersonjoseph/jailed-agents";
   };
 
@@ -50,56 +47,62 @@
         docsShell = pkgs.mkShell {
           packages = [ pkgs.python3 pkgs.git ];
           shellHook = ''
-            echo "ragent devshell."
-            echo "  Docs:  python3 tools/okf_render.py   (-> docs/html/)"
-            echo "  Jail:  Linux only — run inside the Lima guest (lima/ragent.yaml)."
+            echo "ragent docs devshell."
+            echo "  Render docs:  python3 tools/okf_render.py   (-> docs/html/)"
+            echo "  Jail/workspace: Linux only — run inside the Lima guest (lima/ragent.yaml)."
           '';
         };
 
-        # -------------------------------------------------------------------
-        # Phase 1 — the jail (Linux only)
-        # -------------------------------------------------------------------
-        linuxOutputs =
-          let
-            jail = jail-nix.lib.init pkgs;
-            ja = jailed-agents.lib.${system};
+        # ---- Phase 1: the jail (Linux only) ----
+        jail = jail-nix.lib.init pkgs;
+        ja = jailed-agents.lib.${system};
 
-            # The confinement contract, stated once. Bubblewrap exposes the bare
-            # minimum by default, so $HOME, SSH keys, and every other secret are
-            # DENIED unless explicitly bound — and we bind nothing but the cwd.
-            confinementProfile = with jail.combinators; [
-              network                              # egress for the LLM API
-              time-zone
-              no-new-session
-              mount-cwd                            # the PROJECT DIRECTORY (cwd) rw — and nothing else
-              (try-fwd-env "ANTHROPIC_API_KEY")    # runtime-forwarded key; never enters the Nix store (ADR-0014)
-              (add-pkg-deps (with pkgs; [ bashInteractive coreutils ]))
-            ];
+        # The confinement contract, stated once. Bubblewrap exposes the bare
+        # minimum by default, so $HOME, SSH keys, and every other secret are
+        # DENIED unless explicitly bound — and we bind nothing but the cwd.
+        confinementProfile = with jail.combinators; [
+          network                              # egress for the LLM API
+          time-zone
+          no-new-session
+          mount-cwd                            # the PROJECT DIRECTORY (cwd) rw — and nothing else
+          (try-fwd-env "ANTHROPIC_API_KEY")    # runtime-forwarded key; never enters the Nix store (ADR-0014)
+          (add-pkg-deps (with pkgs; [ bashInteractive coreutils ]))
+        ];
 
-            # A jailed shell that carries exactly the agent's confinement profile.
-            # This is the security proof: the negative-control test drives THIS,
-            # so confinement is proven without depending on agent packaging
-            # (ADR-0013). tools/confinement-test.sh runs against it.
-            jailed-probe = jail "ragent-jail-probe" pkgs.bashInteractive confinementProfile;
-          in
-          {
-            packages = {
-              inherit jailed-probe;
+        # A jailed shell carrying exactly the agent confinement profile — the
+        # security proof that tools/confinement-test.sh drives (ADR-0013).
+        jailed-probe = jail "ragent-jail-probe" pkgs.bashInteractive confinementProfile;
+        jailed-opencode = ja.makeJailedOpencode { };
+        jailed-claude-code = ja.makeJailedClaudeCode { };
 
-              # First real agent — jailed-agents' best-documented example, lowest
-              # friction to reach the confinement gate (ADR-0013).
-              jailed-opencode = ja.makeJailedOpencode { };
-
-              # Dogfood target: Claude Code inside its own jail — the recursive
-              # "it works" milestone. Kept as an explicit output; verified to
-              # build in-guest before it is relied on (may need unfree/auth).
-              jailed-claude-code = ja.makeJailedClaudeCode { };
-            };
-          };
+        # ---- Phase 2: the Zellij workspace (Linux only) ----
+        # Tools for the two-side workspace. Launch the workspace from THIS shell
+        # (or via `nix develop .#workspace`) so the Zellij panes inherit a PATH
+        # with nvim/lazygit/the agents on it. neovim here is plain — no LSPs are
+        # configured yet (that is a later refinement, not claimed as done).
+        workspaceShell = pkgs.mkShell {
+          packages = [
+            pkgs.zellij
+            pkgs.neovim
+            pkgs.lazygit
+            pkgs.git
+            jailed-opencode
+            jailed-claude-code
+          ];
+          shellHook = ''
+            echo "ragent workspace devshell (Phase 2)."
+            echo "  Launch:  ./tools/ragent-workspace.sh <project-dir> [task]"
+            echo "  Tools:   zellij, nvim (plain), lazygit, git"
+            echo "  Agents:  jailed-opencode, jailed-claude-code (run via tools/ragent-run.sh)"
+          '';
+        };
       in
       {
         devShells.default = docsShell;
       }
-      // lib.optionalAttrs isLinux linuxOutputs
+      // lib.optionalAttrs isLinux {
+        packages = { inherit jailed-probe jailed-opencode jailed-claude-code; };
+        devShells = { default = docsShell; workspace = workspaceShell; };
+      }
     );
 }
