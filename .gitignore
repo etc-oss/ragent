@@ -1,0 +1,29 @@
+# --- Editor swap / backup files ---
+*.swp
+*.swo
+.*.swp
+.*.swo
+*~
+
+# --- Nix build outputs ---
+result
+result-*
+.direnv/
+
+# --- Local resilience / mirror layer ---
+# The private mirror of pinned upstreams is deliberately kept OUT of the public
+# repo (see docs/knowledge/decisions/0010-local-mirror-resilience.md).
+# tools/mirror-example.sh is a publishable template and IS tracked.
+/mirror/
+/.mirror/
+*.local.nix
+*.mirror.json
+
+# --- Python tooling caches ---
+__pycache__/
+*.pyc
+*.pyo
+
+# --- OS cruft ---
+.DS_Store
+Thumbs.db

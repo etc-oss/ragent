@@ -1,0 +1,67 @@
+ragent
+Copyright 2026 Gourang Abani and the ragent contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+------------------------------------------------------------------------------
+Third-party works
+------------------------------------------------------------------------------
+
+ragent consumes and credits the following third-party works. It does NOT vendor,
+copy, or redistribute their source code; the public repository contains only
+URLs and content hashes (flake.nix / flake.lock). Each work remains under its
+own license, held by its own authors. The *mechanism* of consumption differs per
+upstream and is stated precisely below, so the credit is accurate, not just
+generous.
+
+jail.nix is licensed GPL-3.0. Because ragent only references it as a flake
+input and never copies its source into this repository, ragent's own files stay
+under Apache-2.0; the copyleft attaches to jail.nix's code upstream, not here.
+Do not vendor GPL/LGPL upstreams into this repository without revisiting this.
+
+Pinned Nix flake inputs (URL + content hash in flake.nix / flake.lock):
+
+  - jail.nix — Alex David — GPL-3.0
+        https://git.sr.ht/~alexdavid/jail.nix
+  - Nixpkgs — the Nixpkgs contributors — MIT
+        https://github.com/NixOS/nixpkgs
+  - flake-utils — Numtide — MIT
+        https://github.com/numtide/flake-utils
+
+Built from Nixpkgs as packages (not separate inputs), as the runtime is wired up
+in later phases:
+
+  - Bubblewrap — the Bubblewrap authors — LGPL-2.0-or-later
+        https://github.com/containers/bubblewrap    (the sandbox jail.nix drives)
+  - Zellij — the Zellij contributors — MIT
+        https://github.com/zellij-org/zellij
+  - Neovim — the Neovim contributors — Apache-2.0 AND Vim
+        https://github.com/neovim/neovim
+
+External runtime host (installed by the user; not a Nix input):
+
+  - Lima — the Lima authors — Apache-2.0
+        https://github.com/lima-vm/lima    (the Linux VM the flake runs inside)
+
+Knowledge format:
+
+  - Open Knowledge Format (OKF), in GoogleCloudPlatform/knowledge-catalog
+        Google LLC — Apache-2.0
+        https://github.com/GoogleCloudPlatform/knowledge-catalog
+
+Studied as prior art (not dependencies of this repository):
+
+  - jailed-agents — Anderson Joseph — MIT
+        https://github.com/andersonjoseph/jailed-agents
+  - sandnix — Sridhar Ratnakumar (srid) — GPL-3.0
+        https://github.com/srid/sandnix
+
+Candidate CLI tools (a specific one is pinned when adopted; see THIRD_PARTY.md):
+
+  - git-surgeon — raine — MIT
+        https://github.com/raine/git-surgeon
+  - git-surgeon — hyperb1iss — GPL-2.0
+        https://github.com/hyperb1iss/git-surgeon
+
+See THIRD_PARTY.md for the full attribution table, verification notes, and the
+reference-don't-redistribute rationale.
