@@ -17,9 +17,10 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # The layout is set by the devshell/app to the flake-GENERATED (PATH-substituted)
 # store layout. The raw workspace/ragent-workspace.kdl is a @bash@/@paneBin@
-# TEMPLATE and must not be used un-substituted — so require RAGENT_LAYOUT rather
-# than falling back to the template.
-LAYOUT="${RAGENT_LAYOUT:?run via 'nix develop .#workspace' or 'nix run .#workspace' (RAGENT_LAYOUT unset)}"
+# TEMPLATE and must not be used un-substituted. RAGENT_LAYOUT is REQUIRED to launch
+# the TUI, but not to do clone/boundary setup (RAGENT_NO_LAUNCH) — so it is checked
+# just before the Zellij launch, below, not here.
+LAYOUT="${RAGENT_LAYOUT:-}"
 RAGENT_RUN="${RAGENT_RUN_BIN:-$REPO/tools/ragent-run.sh}"
 # Neon/pastel theming (Tokyo Night, greens neutralized): Zellij via --config,
 # lazygit via LG_CONFIG_FILE, neovim via the flake. Overridable per config repo.
@@ -96,6 +97,9 @@ if [ -n "${RAGENT_NO_LAUNCH:-}" ]; then
   echo "(RAGENT_NO_LAUNCH set — clone + workspace metadata ready; skipping Zellij)"
   exit 0
 fi
+
+# A layout is required to launch the TUI (but not for the setup-only path above).
+: "${LAYOUT:?run via 'nix develop .#workspace' or 'nix run .#workspace' (RAGENT_LAYOUT unset)}"
 
 # Zellij cannot render on a dumb/unset terminal (a common cause of an apparently
 # frozen TUI, e.g. under `limactl shell` which may pass TERM=dumb). Force a sane one.
