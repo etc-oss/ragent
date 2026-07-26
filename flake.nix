@@ -137,9 +137,22 @@
         };
         # Shared between the workspace devshell and the packaged launcher app.
         workspaceTools = [ pkgs.zellij ragentNvim pkgs.lazygit pkgs.git ] ++ lspServers ++ sharedTools;
+
+        # Tools the Zellij panes invoke at runtime (nvim/lazygit/git/tail/…). Baked
+        # into the layout as an explicit PATH so panes work from ANY launch context,
+        # not only the devshell (fixes the "launch from devshell or tools not found"
+        # footgun that could leave a broken session).
+        paneBin = pkgs.lib.makeBinPath ([ pkgs.bashInteractive pkgs.coreutils pkgs.git pkgs.lazygit ragentNvim ] ++ sharedTools ++ allAgents);
+        # The layout is a template; substitute the absolute bash + the pane PATH.
+        workspaceLayout = pkgs.writeText "ragent-workspace.kdl" (builtins.replaceStrings
+          [ "@bash@" "@paneBin@" ]
+          [ "${pkgs.bashInteractive}/bin/bash" paneBin ]
+          (builtins.readFile ./workspace/ragent-workspace.kdl));
+
         workspaceShell = pkgs.mkShell {
           packages = workspaceTools ++ allAgents;
           shellHook = ''
+            export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${workspaceLayout}}"
             echo "ragent workspace devshell (Phase 2–3)."
             echo "  Launch:  ./tools/ragent-workspace.sh <project-dir> [task]"
             echo "  Tools:   zellij, nvim (+LSP: nixd/basedpyright/bashls), lazygit, git, git-surgeon, rg, fd, jq"
@@ -158,7 +171,7 @@
           # ''${VAR:-default} form emits a literal shell parameter-expansion while
           # still interpolating the store-path default.
           text = ''
-            export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${./workspace/ragent-workspace.kdl}}"
+            export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${workspaceLayout}}"
             export RAGENT_RUN_BIN="''${RAGENT_RUN_BIN:-${./tools/ragent-run.sh}}"
             export RAGENT_ZELLIJ_CONFIG="''${RAGENT_ZELLIJ_CONFIG:-${./workspace/zellij-config.kdl}}"
             export RAGENT_LAZYGIT_CONFIG="''${RAGENT_LAZYGIT_CONFIG:-${./workspace/lazygit-theme.yml}}"

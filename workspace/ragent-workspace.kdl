@@ -1,13 +1,13 @@
 // ragent workspace — the two-side HUMAN / MACHINE layout (ADR-0005).
 //
-// Loaded by tools/ragent-workspace.sh, which exports the env this layout reads:
-//   RAGENT_MAIN   the human's main project tree (full .git)
-//   RAGENT_CLONE  the agent's self-contained clone on agent/<task> (ADR-0016)
-//   RAGENT_LOG    the agent log the machine tail pane follows
-//
-// Panes inherit the launching shell's env + PATH, so launch from the workspace
-// devshell (`nix develop .#workspace`) or the panes won't find nvim/lazygit/git.
-// Commands run via `bash -c` because Zellij execs `command` directly (no shell).
+// This is a TEMPLATE: the flake substitutes @bash@ (absolute bash) and @paneBin@
+// (the workspace tools' bin dir) so each pane sets its own PATH and never depends
+// on the launching shell — a bare launch can't leave tools unfound. The launcher
+// (tools/ragent-workspace.sh) exports the env these commands read:
+//   RAGENT_MAIN    the human's main project tree (full .git)
+//   RAGENT_CLONE   the agent's self-contained clone on agent/<task> (ADR-0016)
+//   RAGENT_LOG     the agent log the machine tail pane follows
+//   RAGENT_EDITOR  the editor to run (defaults to nvim; a config repo can override)
 layout {
     default_tab_template {
         pane size=1 borderless=true {
@@ -22,11 +22,11 @@ layout {
     // HUMAN: neovim on the main tree + lazygit for review/observability.
     tab name="HUMAN" focus=true {
         pane split_direction="vertical" {
-            pane name="editor" command="bash" {
-                args "-c" "cd \"$RAGENT_MAIN\" && exec nvim ."
+            pane name="editor" command="@bash@" {
+                args "-c" "export PATH=@paneBin@:\"$PATH\"; cd \"$RAGENT_MAIN\" && exec \"${RAGENT_EDITOR:-nvim}\" ."
             }
-            pane name="review (lazygit)" size="45%" command="bash" {
-                args "-c" "cd \"$RAGENT_MAIN\" && exec lazygit"
+            pane name="review (lazygit)" size="45%" command="@bash@" {
+                args "-c" "export PATH=@paneBin@:\"$PATH\"; cd \"$RAGENT_MAIN\" && exec lazygit"
             }
         }
     }
@@ -34,11 +34,11 @@ layout {
     // MACHINE: a shell in the agent clone (launch the jailed agent here) + a log tail.
     tab name="MACHINE" {
         pane split_direction="horizontal" {
-            pane name="agent" command="bash" {
-                args "-c" "cd \"$RAGENT_CLONE\" && cat .ragent/README 2>/dev/null; exec bash"
+            pane name="agent" command="@bash@" {
+                args "-c" "export PATH=@paneBin@:\"$PATH\"; cd \"$RAGENT_CLONE\" && cat .ragent/README 2>/dev/null; exec @bash@"
             }
-            pane name="agent log" size="30%" command="bash" {
-                args "-c" "cd \"$RAGENT_CLONE\" && exec tail -n +1 -F \"$RAGENT_LOG\""
+            pane name="agent log" size="30%" command="@bash@" {
+                args "-c" "export PATH=@paneBin@:\"$PATH\"; cd \"$RAGENT_CLONE\" && exec tail -n +1 -F \"$RAGENT_LOG\""
             }
         }
     }

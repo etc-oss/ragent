@@ -15,9 +15,11 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-# Honor store-path overrides when run as a packaged app (`nix run .#workspace`);
-# fall back to repo-relative paths when run from a checkout.
-LAYOUT="${RAGENT_LAYOUT:-$REPO/workspace/ragent-workspace.kdl}"
+# The layout is set by the devshell/app to the flake-GENERATED (PATH-substituted)
+# store layout. The raw workspace/ragent-workspace.kdl is a @bash@/@paneBin@
+# TEMPLATE and must not be used un-substituted — so require RAGENT_LAYOUT rather
+# than falling back to the template.
+LAYOUT="${RAGENT_LAYOUT:?run via 'nix develop .#workspace' or 'nix run .#workspace' (RAGENT_LAYOUT unset)}"
 RAGENT_RUN="${RAGENT_RUN_BIN:-$REPO/tools/ragent-run.sh}"
 # Neon/pastel theming (Tokyo Night, greens neutralized): Zellij via --config,
 # lazygit via LG_CONFIG_FILE, neovim via the flake. Overridable per config repo.
@@ -100,11 +102,17 @@ fi
 case "${TERM:-}" in "" | dumb) export TERM=xterm-256color ;; esac
 
 SESSION="ragent-$TASK"
-# If the session already exists (e.g. you detached with Ctrl+o d), ATTACH to it
-# rather than trying to recreate it; otherwise start it fresh with the layout.
+# Session hygiene: RAGENT_FRESH=1 discards any existing session of this name first,
+# so you can never get stuck re-attaching to a broken/stale one.
+if [ -n "${RAGENT_FRESH:-}" ]; then
+  zellij delete-session "$SESSION" --force >/dev/null 2>&1 || true
+fi
+# Otherwise, if the session exists (e.g. you detached with Ctrl+o d), ATTACH to it
+# rather than recreating it. If a session ever looks broken (panes showing an exit
+# prompt), recreate it:  RAGENT_FRESH=1 ...   or  zellij kill-all-sessions --yes.
 if zellij list-sessions 2>/dev/null | sed 's/\x1b\[[0-9;?]*[a-zA-Z]//g' \
      | grep -qE "(^|[[:space:]])${SESSION}([[:space:]]|\$)"; then
-  echo "session '$SESSION' exists — attaching (detach with Ctrl+o d)…"
+  echo "session '$SESSION' exists — attaching (detach Ctrl+o d; recreate with RAGENT_FRESH=1)…"
   exec zellij --config "$ZJ_CONFIG" attach "$SESSION"
 fi
 echo "launching Zellij workspace '$SESSION' (detach with Ctrl+o d; quit with Ctrl+q)…"
