@@ -26,3 +26,6 @@ All were seeded from the [genesis conversation](../sessions/0001-genesis-archite
 | [0010](0010-local-mirror-resilience.md) | Local-mirror resilience, kept out of the public repo | accepted |
 | [0011](0011-git-worktree-review-boundary.md) | Git-worktree review boundary for human oversight | proposed |
 | [0012](0012-defer-global-config-split.md) | Defer splitting out a consumable global-config repo | accepted |
+| [0013](0013-jailed-agents-opencode-first.md) | Build the jail on jailed-agents; prove confinement with a probe; opencode first | accepted |
+| [0014](0014-runtime-env-secret-forwarding.md) | Provider API key via runtime env forwarding; no credential dir in the jail | accepted |
+| [0015](0015-cgroup-caps-systemd-run.md) | cgroup resource caps via an external systemd-run scope | accepted |

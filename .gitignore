@@ -27,3 +27,7 @@ __pycache__/
 # --- OS cruft ---
 .DS_Store
 Thumbs.db
+
+# transient eval/error capture
+e.txt
+err.txt

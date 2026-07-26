@@ -34,7 +34,7 @@ This plan refines and expands the roadmap sketched in the
 
 ---
 
-## Phase 1 — The jail, one agent  `TODO`
+## Phase 1 — The jail, one agent  `WIP`
 
 **Goal:** one coding agent running confined via [jail.nix](../decisions/0002-jail-nix-confinement.md)
 inside [Lima](../decisions/0004-lima-vm-layer.md), with a read-write bind mount
@@ -43,6 +43,27 @@ scoped to the project directory and nothing else.
 **Study first:** `andersonjoseph/jailed-agents` (its `makeJailedAgent` builder
 and the crush/opencode/pi jails), the `jail.nix` combinator set, and
 `srid/sandnix` (as the weaker native-mac fallback to understand the trade-off).
+
+**Landed (host side, macOS):**
+- Studied jailed-agents (it exports `makeJailedClaudeCode`/`makeJailedOpencode`/…)
+  and the real jail.nix combinators. Decisions: [ADR-0013](../decisions/0013-jailed-agents-opencode-first.md),
+  [ADR-0014](../decisions/0014-runtime-env-secret-forwarding.md),
+  [ADR-0015](../decisions/0015-cgroup-caps-systemd-run.md).
+- `flake.nix` wires `jailed-agents` + a jail.nix `jailed-probe` (the confinement
+  proof), `jailed-opencode`, and `jailed-claude-code`, Linux-guarded; `flake.lock`
+  updated.
+- `tools/confinement-test.sh` (negative-control gate), `tools/ragent-run.sh`
+  (cgroup launcher), and `lima/ragent.yaml` (guest with user namespaces + cgroup
+  delegation).
+- **Verified on macOS (smoke test):** the darwin devshell and the `aarch64-linux`
+  `jailed-probe` both evaluate/instantiate. The agent derivations use IFD
+  (bun2nix) and must build in the guest — not eval on macOS.
+
+**Remaining (needs a Linux guest — the real exit gate):**
+- Start the Lima VM, confirm unprivileged user namespaces, build `jailed-probe`,
+  and run `confinement-test.sh` → negative controls must pass.
+- Build `jailed-opencode`; dogfood `jailed-claude-code`; forward the API key at
+  runtime; verify the cgroup caps actually bite (delegation).
 
 **Tasks**
 1. Stand up the long-lived Lima VM; confirm unprivileged user namespaces work

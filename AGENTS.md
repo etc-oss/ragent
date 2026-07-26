@@ -26,8 +26,12 @@ and [the forward plan](docs/knowledge/components/forward-plan-phases-1-5.md).
 
 ## Project status
 
-- **Phase 0 (scaffold + governance): done** — this repo.
-- **Phase 1 (the jail, one agent): next.** See the forward plan.
+- **Phase 0 (scaffold + governance): done.**
+- **Phase 1 (the jail, one agent): in progress.** Host-side artifacts have landed
+  — `flake.nix` wires `jailed-agents` + a jail.nix confinement probe, plus
+  `tools/confinement-test.sh`, `tools/ragent-run.sh`, and `lima/ragent.yaml`. The
+  real exit gate (negative-control test) runs inside the Linux guest. See the
+  forward plan and ADRs 0013–0015.
 
 The build is intentionally a vertical slice: scaffold and plan now, implement
 incrementally afterward. Do not try to build everything at once.

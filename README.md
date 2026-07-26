@@ -53,7 +53,7 @@ Detailed plan (tasks, exit criteria, risks) in the
 | Phase | Focus | Status |
 |---|---|---|
 | **0** | Scaffold, governance, knowledge system, plan | ✅ Complete |
-| **1** | The jail, one agent (confined loop; dogfood the jail) | ⬜ Next |
+| **1** | The jail, one agent (confined loop; dogfood the jail) | 🚧 In progress |
 | **2** | The Zellij workspace (two sides + review boundary) | ⬜ Planned |
 | **3** | The tooling layer (shared CLIs on PATH; project template) | ⬜ Planned |
 | **4** | Observability + the 2nd/3rd agent | ⬜ Planned |
