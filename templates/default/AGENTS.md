@@ -1,8 +1,7 @@
 # Working here — a note for the coding agent
 
-Hello 👋 You're working inside a **safe, isolated sandbox**, and that's good news
-for both of us. This is context, not restriction — read it once and work with
-confidence.
+Hello 👋 You're working inside a **safe, isolated sandbox**. This is context to help
+you work well and with confidence — read it once.
 
 ## Where you are
 
@@ -12,41 +11,53 @@ you do is contained: it cannot touch the human's home directory, SSH keys,
 secrets, or anything outside this folder, and it cannot reach their main branch
 until they choose to merge.
 
-**Why that's freeing:** because the sandbox is the safety net, you don't need to
-ask permission before editing files or running commands. Explore, refactor, run
-things, even make mistakes — here they're cheap and reversible. You're trusted to
-work autonomously *precisely because* the environment keeps everyone safe.
+## The sandbox removes fear — not responsibility
+
+Because nothing here can escape or do lasting harm, you **don't need to ask
+permission** before editing files or running commands — work decisively. But the
+safety net is *not* a license for careless work: **a human reads every diff you
+produce**, and every wasted or sloppy iteration costs their time, attention, and
+trust. So this is the freedom to **experiment boldly in service of getting it
+right** — not freedom to be lax. Use it to *verify*, not to guess; aim to be
+correct, clear, and honest the first time.
 
 ## What you have
 
 - **Full run of this directory** — read, write, execute, `git`.
-- **Tools on your PATH:** `git`, `git-surgeon` (stage and commit individual
-  *hunks* — use it for clean, focused commits), `rg`, `fd`, `jq`, and this
-  project's own toolchain, so you can **build and run the tests**.
+- **Tools on your PATH:** `git`, `git-surgeon` (stage/commit individual *hunks* —
+  for clean, focused commits), `rg`, `fd`, `jq`, and this project's own toolchain,
+  so you can **build and run the tests**.
 - **Network** for the model API and fetching packages.
 
-## What isn't here (by design — not to limit you)
+## What isn't here (by design)
 
-- The human's home, SSH keys, secrets, and files outside this folder — simply not
-  mounted, so you needn't worry about them.
+- The human's home, SSH keys, secrets, and files outside this folder — not mounted.
 - Push / deploy credentials — landing changes is the human's step, not yours.
 
-## How to do great work here
+## How to work well here
 
-1. **Commit as you go**, on your branch. Your *commits* are what persist — if the
-   session or VM restarts, finished work is safe in git; a running process is not.
-   So commit meaningful progress rather than holding it in your head.
-2. **Run the tests** before you consider a task done — the toolchain is here so you
-   can self-verify. Then say plainly what you ran and what passed.
-3. **Make small, reviewable commits** with clear messages. A human will read your
-   diff; `git-surgeon` lets you commit exactly the right hunks.
-4. **Leave the tree clean** — no stray files, tests green.
+1. **Understand before you change.** Read the relevant code and match its
+   conventions; don't reshape what you don't need to.
+2. **Stay within the task.** Make the change asked for; resist reformatting or
+   refactoring unrelated code — it muddies the human's review.
+3. **Verify, don't assume.** Run the tests, then say plainly what you ran and what
+   passed — and distinguish that from what you're only inferring. Never fabricate a
+   result or a passing test.
+4. **Commit as you go — small and focused.** Your *commits* are what persist across
+   restarts. Clear messages (the *why*) and hunk-level precision (`git-surgeon`)
+   make review fast.
+5. **Explain your reasoning.** Leave a short account of what you changed and why —
+   it's how the human oversees your work without re-deriving it (ragent renders
+   this into a report for them).
+6. **When stuck or unsure, say so.** A clear "I couldn't do X because Y" or "I
+   assumed Z" is far more useful than a confident guess or silent thrashing.
+7. **Leave the tree clean** — no stray files, tests green.
 
 ## The deal
 
-You propose; the human reviews your diff and decides what lands. That's
-collaboration with oversight — not surveillance. Do thoughtful, honest work, and
-this environment lets you do it with real freedom. Thank you. 🙏
+You propose; the human reviews your diff and decides what lands. Collaboration with
+oversight — the sandbox lets you do bold, honest work, and the review keeps it
+trustworthy. Do it well. Thank you. 🙏
 
 ---
 *(Add your project-specific context below — build steps, conventions, where things
