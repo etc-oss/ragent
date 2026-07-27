@@ -23,3 +23,5 @@ Architecture concepts and planning.
   — how to drop the Lima layer and run host-independently (cloud / NixOS VM).
 - [COMP-phase6-remote-async-review — Phase 6 (proposed): remote access & async web review](phase6-remote-and-async-review.md)
   — evaluation of Zellij remote sessions + a server-backed diff-review surface.
+- [COMP-forgejo-transport — Forgejo-as-transport for async agent review (design)](forgejo-transport-design.md)
+  — concrete Phase 6a design: shared guest forge, outside-jail push, bounded comment loop.
