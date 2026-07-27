@@ -28,7 +28,10 @@ project.** The orchestrator (ragent, host-side, outside the jail) is
 transport-agnostic and drives a small **adapter interface**; concrete adapters
 implement it for each backend.
 
-**Adapter interface (verbs the orchestrator calls):**
+**Adapter interface (verbs the orchestrator calls).** *Provisional — finalized by
+[ADR-0022](0022-python-adapters-verb-superset-capabilities.md), which splits `ensure`
+into `init`+`ping`, renames `open-review`→`handover`, `comments`→`examine`,
+`report`→`reply`, and adds a `capabilities` verb (9 verbs, four groups):*
 
 | Verb | Meaning |
 |---|---|
