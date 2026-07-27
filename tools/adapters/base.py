@@ -21,6 +21,11 @@ CODE = "code"
 REVIEW = "review"
 CONVERSATION = "conversation"
 
+# Marks bot-authored conversation posts (adapter.reply prefixes it) so the 6b loop
+# never re-reads the orchestrator's own replies as if they were human review notes
+# (matters when the bot and the reviewer are the same forge user, e.g. in tests).
+REPLY_MARKER = "\U0001f916 ragent"  # 🤖 ragent
+
 
 class ReviewAdapter(ABC):
     # --- meta -----------------------------------------------------------------

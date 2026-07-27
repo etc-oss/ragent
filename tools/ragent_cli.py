@@ -38,7 +38,7 @@ def cmd_window(a):
 def cmd_orchestrate(a):
     sys.path.insert(0, HERE)
     from orchestrator import orchestrate
-    orchestrate(a.project, a.name, a.prompt)
+    orchestrate(a.project, a.name, a.prompt, follow=a.follow)
 
 
 def cmd_review(a):
@@ -73,7 +73,9 @@ def build_parser():
     o.add_argument("project")
     o.add_argument("name")
     o.add_argument("prompt")
-    o.set_defaults(fn=cmd_orchestrate)
+    o.add_argument("--no-follow", dest="follow", action="store_false",
+                   help="open the review and stop (skip the 6b poll→revise→merge loop)")
+    o.set_defaults(fn=cmd_orchestrate, follow=True)
 
     r = task.add_parser("review", help="serve the per-task HTML reports over HTTP")
     r.add_argument("clone", nargs="?")

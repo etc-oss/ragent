@@ -19,12 +19,7 @@ import time
 import urllib.error
 import urllib.request
 
-from .base import ReviewAdapter, CODE, REVIEW, CONVERSATION
-
-# Belt-and-suspenders marker so the 6b loop never re-feeds the orchestrator's own
-# replies to the agent as if they were human review notes (matters when the bot and
-# the reviewer are the same forge user, e.g. in a single-user test).
-REPLY_MARKER = "\U0001f916 ragent"  # 🤖 ragent
+from .base import ReviewAdapter, CODE, REVIEW, CONVERSATION, REPLY_MARKER
 
 
 class ForgejoAdapter(ReviewAdapter):

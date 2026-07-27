@@ -34,13 +34,18 @@ work on the primary device. Design in
 [async review transport](forgejo-transport-design.md); decision in
 [ADR-0020](../decisions/0020-review-transport-adapters.md).
 
-- **6a — done (local), verified:** the Forgejo adapter + orchestrator open a real
-  PR from a real agent task (body = the agent's explanation + the served-report
+- **6a — done, rebuilt in Python (ADR-0022/0023), re-verified at parity:** the
+  Forgejo adapter + orchestrator, driven by `ragent task orchestrate`, open a real PR
+  from a real confined agent task (body = the agent's explanation + the served-report
   link, diff = the real change). Remote next: the same adapter against a NixOS
   `services.forgejo` on Tailscale (a URL swap).
-- **6b** — the bounded comment → agent-revision loop (polling), per task until
-  resolved.
-- **6c** — polish: notifications, mobile ergonomics, resolution/labels, concurrency.
+- **6b — done, verified (ADR-0024):** the bounded, **human-paced**
+  `examine`→revise→`reply`→`merge` loop — poll `status`, feed only NEW review notes to
+  the confined agent, per task until resolved. `max_iterations` is the load-bearing
+  runaway guard; wall-clock is a resource cap (hours); "cost" is cumulative agent
+  runtime; a tripped bound posts a **needs-human** reply and stops.
+- **6c** — polish: notifications, mobile ergonomics, a needs-human forge label,
+  concurrency.
 
 The transport is a **pluggable adapter** (Forgejo default; GitLab, GitHub
 Enterprise, git-over-SSH), configured per project (`reviewConfig`: adapter, remote,
@@ -50,7 +55,7 @@ Enterprise, git-over-SSH), configured per project (`reviewConfig`: adapter, remo
 alongside every task, the agent's own explanation + the real diff render to a
 self-contained HTML report, served (`nix run .#task-review`, localhost/Tailscale). This
 is the forge-independent oversight channel — universal, reviewable from any device —
-and the substrate a forge `report` verb can later post.
+and the substrate the forge `reply` verb posts back into the thread (6b).
 
 ## Beyond — future guidelines (direction, not commitments)
 
@@ -62,9 +67,10 @@ and the substrate a forge `report` verb can later post.
   (`mkWorkspace { agentConfig = { jailed-claude-code = { skills=…; extraBind=…; }; }; }`),
   so a capable agent runs at full strength while the orchestrator stays
   agent-agnostic (ADR-0007). Deferred — flagged for design later.
-- **Adapters in a real language** — rewrite the transport adapters from `sh` to
-  Python (or Go), using the forge SDKs; the transport-agnostic verb boundary makes
-  this a contained, per-adapter change.
+- **Adapters in Python — done (ADR-0022).** The transport adapters + orchestrator are
+  Python behind a `ReviewAdapter` ABC (stdlib `urllib`); the transport-agnostic verb
+  boundary made it a contained change. A Go/Rust adapter would need a subprocess shim
+  (out of scope). What remains is *more* adapters ↓.
 - **More adapters** as needed — the `ssh` (forge-less) adapter for minimal setups;
   hardening the GitLab/GitHub Enterprise ones for teams.
 - **Stronger isolation** — graduate from bubblewrap to **microvm.nix** for a

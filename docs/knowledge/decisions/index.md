@@ -37,3 +37,4 @@ All were seeded from the [genesis conversation](../sessions/0001-genesis-archite
 | [0021](0021-per-task-explanatory-report.md) | Per-task explanatory HTML report, served for universal oversight | accepted |
 | [0022](0022-python-adapters-verb-superset-capabilities.md) | Review adapters in Python; a finalized verb superset with capabilities | accepted |
 | [0023](0023-unified-ragent-cli.md) | Unified `ragent` CLI (task subcommands) over flat per-app entry points | accepted |
+| [0024](0024-human-paced-bounded-review-loop.md) | The 6b review loop is human-paced; max_iterations is the runaway guard | accepted |

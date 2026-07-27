@@ -7,7 +7,7 @@ URL/token differ). The orchestrator imports the ABC, never a concrete forge.
 
 import os
 
-from .base import ReviewAdapter, CODE, REVIEW, CONVERSATION  # noqa: F401
+from .base import ReviewAdapter, CODE, REVIEW, CONVERSATION, REPLY_MARKER  # noqa: F401
 
 
 def load(name=None, **cfg) -> ReviewAdapter:

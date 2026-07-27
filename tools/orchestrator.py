@@ -13,11 +13,12 @@ partial transport degrades gracefully. The bounded comment→revise→merge loop
 import os
 import subprocess
 import sys
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)  # so `adapters` (and the report generator) resolve
 
-from adapters import load, CODE, REVIEW, CONVERSATION  # noqa: E402
+from adapters import load, CODE, REVIEW, CONVERSATION, REPLY_MARKER  # noqa: E402
 
 # Appended to every task prompt so the agent leaves the artifacts review needs.
 _PROMPT_SUFFIX = """
@@ -57,7 +58,109 @@ def _review_body(clone, task):
     return body
 
 
-def orchestrate(project, task, prompt, agent=None):
+# --- 6b: the bounded review loop (ADR-0024) ----------------------------------
+# The loop is HUMAN-PACED: the confined agent revises ONLY in response to a NEW
+# human note (it has no forge access; the bot's own replies carry REPLY_MARKER and
+# are filtered out). It cannot self-trigger — so `max_iterations` is the load-bearing
+# runaway guard. Wall-clock is a *resource* cap (orchestrator lifetime, in HOURS),
+# not a misbehavior signal; "cost" is cumulative AGENT runtime (never human idle).
+
+def _sig(note):
+    return (note["kind"], note["ts"], note["author"], note["body"])
+
+
+def _review_config():
+    def _i(k, d):
+        return int(os.environ.get(k, d))
+
+    def _f(k, d):
+        return float(os.environ.get(k, d))
+
+    return {
+        "poll_interval": _f("RAGENT_POLL_INTERVAL", 20),
+        "auto_merge": os.environ.get("RAGENT_AUTO_MERGE", "").lower() in ("1", "true", "yes"),
+        "bounds": {
+            "max_iterations": _i("RAGENT_MAX_ITERATIONS", 6),
+            "max_agent_min": _f("RAGENT_MAX_AGENT_MIN", 30),
+            "max_wall_hours": _f("RAGENT_MAX_WALL_HOURS", 24),
+        },
+    }
+
+
+def _step(adapter, review, clone, branch, base, agent, processed, auto_merge, revise):
+    """One poll-and-maybe-revise. Returns (status, action, agent_seconds_spent);
+    action ∈ {'merged','approved','revised','waiting'}. Mutates `processed` (the set
+    of note signatures already fed to the agent). Split out from the loop so the
+    mechanics are unit-testable without threads or real sleeps."""
+    st = adapter.status(review)
+    if st == "approved":
+        if auto_merge:
+            adapter.merge(review)
+            return (st, "merged", 0.0)
+        return (st, "approved", 0.0)
+    if st == "changes-requested":
+        new = [n for n in adapter.examine(review)
+               if _sig(n) not in processed and not n["body"].startswith(REPLY_MARKER)]
+        if new:
+            body = ("Address these review comments, then commit:\n\n"
+                    + "\n\n".join("- " + n["body"] for n in new))
+            t0 = time.monotonic()
+            revise(clone, agent, body + _PROMPT_SUFFIX)
+            spent = time.monotonic() - t0
+            adapter.push(clone, branch, base)
+            adapter.reply(review, "addressed the latest review notes; pushed an update.")
+            for n in new:
+                processed.add(_sig(n))
+            return (st, "revised", spent)
+    return (st, "waiting", 0.0)
+
+
+def review_loop(adapter, review, clone, branch, base, agent, *,
+                bounds, poll_interval, auto_merge, revise=None):
+    """Bounded examine→revise→reply→merge loop, per task until resolved. A thin
+    sleep+bounds wrapper around `_step`. State (`processed`) is in-memory: a crash
+    re-feeds notes on restart — fine for a per-task process; persist to `.ragent/`
+    if this ever outlives one task."""
+    revise = revise or _run_agent
+    processed = set()
+    iterations = 0
+    agent_seconds = 0.0
+    start = time.monotonic()
+    while True:
+        st, action, spent = _step(adapter, review, clone, branch, base, agent,
+                                  processed, auto_merge, revise)
+        agent_seconds += spent
+        if action == "merged":
+            print("✓ approved → merged")
+            return "merged"
+        if action == "approved":
+            print("✓ approved — merge when ready (autoMerge off)")
+            return "approved"
+        if action == "revised":
+            iterations += 1
+            print("↻ revision %d pushed; awaiting re-review" % iterations)
+            # The load-bearing runaway guard (human-paced loop → count revisions).
+            if iterations >= bounds["max_iterations"]:
+                adapter.reply(review, "%s: needs-human — hit maxIterations=%d without approval."
+                              % (REPLY_MARKER, bounds["max_iterations"]))
+                print("⚠ needs-human: maxIterations")
+                return "needs-human"
+            # Cost = cumulative AGENT runtime (not human idle).
+            if agent_seconds > bounds["max_agent_min"] * 60:
+                adapter.reply(review, "%s: needs-human — cumulative agent runtime exceeded %g min."
+                              % (REPLY_MARKER, bounds["max_agent_min"]))
+                print("⚠ needs-human: agent runtime")
+                return "needs-human"
+            continue  # re-check status immediately after a revision
+        # 'waiting': nothing new from the human. Wall-clock = orchestrator lifetime.
+        if (time.monotonic() - start) > bounds["max_wall_hours"] * 3600:
+            print("⏹ orchestrator lifetime cap (%gh) reached — stopping; re-run to resume."
+                  % bounds["max_wall_hours"])
+            return "timeout"
+        time.sleep(poll_interval)
+
+
+def orchestrate(project, task, prompt, agent=None, follow=True):
     """Run one task through: setup → confined agent → publish review. Returns the
     review handle (or None for a review-less transport)."""
     project = os.path.abspath(project)
@@ -107,8 +210,21 @@ def orchestrate(project, task, prompt, agent=None):
 
     review = adapter.handover(branch, base, task, _review_body(clone, task))
     print("✓ review opened: %s" % adapter.review_url(review))
-    print("  (6a: review it on your phone; the comment→revise→merge loop is 6b)")
-    return review
+
+    if not follow:
+        print("  (--no-follow: opened only; re-run without it to run the review loop)")
+        return review
+    if CONVERSATION not in caps:
+        print("  (transport lacks 'conversation' — review via the served report; no loop)")
+        return review
+
+    # 6b: the bounded examine→revise→reply→merge loop, per task until resolved.
+    cfg = _review_config()
+    print("  following review — poll %ss, bounds %s (Ctrl-C to detach; the PR persists)"
+          % (cfg["poll_interval"], cfg["bounds"]))
+    return review_loop(adapter, review, clone, branch, base, agent,
+                       bounds=cfg["bounds"], poll_interval=cfg["poll_interval"],
+                       auto_merge=cfg["auto_merge"])
 
 
 def main(argv=None):
