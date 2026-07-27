@@ -105,10 +105,22 @@ and the crush/opencode/pi jails), the `jail.nix` combinator set, and
   `~/.claude.json` is a **file** bind source, so `RAGENT_PRECREATE_DIRS`
   (mkdir-only) does not cover it — file bind sources need separate creation.
 
-**Remaining in Phase 1:**
-- A full agent-driven edit: run a jailed agent (opencode or Claude Code) on a real
-  editing task with runtime-forwarded auth (ADR-0014) and review the diff — needs
-  the owner's provider key. This is the last piece of the Phase 1 dogfood.
+**DONE — the full synchronous loop ran for real (2026-07-27):** with the owner's
+API key, jailed Claude Code performed a real task confined to its clone (added a
+`multiply()` function + a test to a demo project), committed on `agent/<task>`;
+the human side fetched the branch, reviewed the diff, and **ran the test (2
+passed)**; the change was merged into the main tree (tests still green). This is
+the genuine edit → review → merge loop — the Phase 1 dogfood, and the prerequisite
+the [Phase 6 evaluation](phase6-remote-and-async-review.md) named. Two integration
+gaps were fixed to get here (see [ADR-0014](../decisions/0014-runtime-env-secret-forwarding.md)):
+jailed-agents didn't forward the provider key (added `try-fwd-env` to every
+agent's base options), and Claude Code needs `CLAUDE_CODE_SIMPLE=1` to use the key.
+
+**Known limitation surfaced by the run:** the jail has no project *runtime*
+(`python` here), so the agent **could not run the tests itself** — it verified by
+inspection and was honest about it; the human side ran the tests (outside the jail,
+via nix). To let agents self-verify, the project's runtime/test tools should be on
+the in-jail PATH (a per-project extension of `sharedTools`). Tracked for Phase 3+.
 
 **Tasks**
 1. Stand up the long-lived Lima VM; confirm unprivileged user namespaces work

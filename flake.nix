@@ -94,10 +94,29 @@
         # Agents get the shared tools on their in-jail PATH via extraPkgs. All four
         # are jailed identically (same confinement + sharedTools), so they invoke
         # the tooling layer uniformly through bash.
-        jailed-opencode = ja.makeJailedOpencode { extraPkgs = sharedTools; };
-        jailed-claude-code = ja.makeJailedClaudeCode { extraPkgs = sharedTools; };
-        jailed-pi = ja.makeJailedPi { extraPkgs = sharedTools; };
-        jailed-crush = ja.makeJailedCrush { extraPkgs = sharedTools; };
+        #
+        # jailed-agents' commonJailOptions (network/time-zone/no-new-session) does
+        # NOT forward the provider API key, so an agent authenticates as "Not logged
+        # in" even with a valid key in the environment. Extend the base options with
+        # a runtime `fwd-env` of the provider keys (ADR-0014) — using jailed-agents'
+        # OWN jail instance (ja.internals.jail) so the combinators match its jail.nix.
+        # try-fwd-env tolerates a key being unset (agents that don't need it).
+        jaCombinators = ja.internals.jail.combinators;
+        agentBaseOptions = ja.commonJailOptions
+          ++ map jaCombinators.try-fwd-env [ "ANTHROPIC_API_KEY" "OPENAI_API_KEY" ];
+
+        jailed-opencode = ja.makeJailedOpencode { extraPkgs = sharedTools; baseJailOptions = agentBaseOptions; };
+        # CLAUDE_CODE_SIMPLE=1: make Claude Code authenticate strictly with
+        # ANTHROPIC_API_KEY (forwarded above) instead of OAuth/keychain, which don't
+        # exist in the jail. Without it a jailed run reports "Not logged in" even with
+        # a valid key. (Verified: the env var, not the --bare flag, takes effect.)
+        jailed-claude-code = ja.makeJailedClaudeCode {
+          extraPkgs = sharedTools;
+          env = { CLAUDE_CODE_SIMPLE = "1"; };
+          baseJailOptions = agentBaseOptions;
+        };
+        jailed-pi = ja.makeJailedPi { extraPkgs = sharedTools; baseJailOptions = agentBaseOptions; };
+        jailed-crush = ja.makeJailedCrush { extraPkgs = sharedTools; baseJailOptions = agentBaseOptions; };
         allAgents = [ jailed-opencode jailed-claude-code jailed-pi jailed-crush ];
 
         # ---- Phase 2: the Zellij workspace (Linux) ----

@@ -68,6 +68,26 @@ env-forward the provider key and drop/override the credential-dir bind, or
 consciously accept that the agent's credentials live in the real home path.
 Decide deliberately at that point, per agent.
 
+## Resolved in the first real run (2026-07-27)
+
+Wiring a real agent surfaced two integration gaps, both fixed in `flake.nix`:
+
+1. **jailed-agents does not forward the provider key.** Its `commonJailOptions`
+   (network/time-zone/no-new-session) omits any `fwd-env`, so a jailed agent sees
+   no key and reports "Not logged in" even with a valid key in the environment.
+   Fix: extend each agent's `baseJailOptions` with
+   `try-fwd-env "ANTHROPIC_API_KEY"` / `"OPENAI_API_KEY"`, using jailed-agents' own
+   jail instance (`ja.internals.jail.combinators`) so the combinators match its
+   jail.nix. The key is still runtime-forwarded — never in the store.
+2. **Claude Code needs `CLAUDE_CODE_SIMPLE=1`** to authenticate *strictly* with
+   `ANTHROPIC_API_KEY` (otherwise it prefers OAuth/keychain, which don't exist in
+   the jail). Baked in via `makeJailedClaudeCode { env = { CLAUDE_CODE_SIMPLE = "1"; }; }`.
+
+With both, a jailed Claude Code authenticates and completes a real task
+confined to its clone — verified end to end (edit → review → test → merge).
+The credential-dir bind (`~/.claude.json`) is still present but unused for auth
+(the env key takes precedence); dropping that bind is still open.
+
 ## Links
 - [Genesis session](../sessions/0001-genesis-architecture-conversation.md)
 - [ADR-0002 — jail.nix for confinement](0002-jail-nix-confinement.md)
