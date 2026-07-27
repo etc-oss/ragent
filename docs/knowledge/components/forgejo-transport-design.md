@@ -113,9 +113,14 @@ bespoke database. The orchestrator tracks only iteration count / caps in the clo
 
 ## Phasing
 
-- **6a (this design):** Forgejo on the guest + the orchestrator pushes an agent
-  branch as a PR you can review read-only on your phone. *No comment loop yet.*
-- **6b:** the comment → agent-revision loop (webhook or poll), bounded.
+- **6a — BUILT & verified locally (2026-07-27):** `tools/adapters/forgejo.sh` +
+  `tools/ragent-orchestrate.sh` + `tools/forgejo-local.sh` (+ `nix run
+  .#orchestrate` / `.#forgejo-local`). A real agent task opened PR #1 on a local
+  Forgejo — body = the agent's `EXPLAIN.md` + the served-report link, diff = the
+  real change, mergeable. **Remote next:** the same adapter against a NixOS
+  `services.forgejo` on Tailscale in your-config-repo — a URL swap, no code change.
+- **6b:** the comment → agent-revision loop (poll `status`/`comments`, `report`
+  back), bounded, per task until resolved.
 - **6c:** polish — notifications tuning, mobile ergonomics, resolution/labels,
   multiple concurrent tasks.
 

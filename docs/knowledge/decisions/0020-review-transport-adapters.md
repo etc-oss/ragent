@@ -40,10 +40,14 @@ implement it for each backend.
 | `report <review> <text>` | Post the agent's reply/report back into the thread ("addressed X by …") — so you see its response on your phone. |
 | `merge <review>` | Merge (only when `autoMerge` and approved). |
 
-> **The interface is provisional.** The *decision* to use adapters is accepted; this
-> exact verb set is a hypothesis written before any adapter runs. 6a (the first
-> Forgejo adapter, pushing one real PR) is expected to reshape it — that is not an
-> amendment to this ADR, it is the interface earning its shape.
+> **Interface — validated by the first adapter (6a, 2026-07-27).** The Forgejo
+> adapter now implements these verbs and a real agent task opened a real PR
+> end-to-end. The verb set held up; the corrections were operational (in
+> `adapters/forgejo.sh`), not to the interface: `push` must send the **base branch
+> first** (a PR needs its base on the forge), and `open-review` must **retry** —
+> right after a push Forgejo briefly can't resolve the branch ("target couldn't be
+> found"), and a re-run should reuse the already-open PR. Later adapters
+> (GitLab/GitHub/SSH) may still nudge it.
 
 **Adapters (initial):** `forgejo` (default, self-hosted), `gitlab`, `github`
 (Enterprise or SaaS), and `ssh` (bare git over SSH + patch/notes — the minimal,

@@ -34,8 +34,10 @@ work on the primary device. Design in
 [async review transport](forgejo-transport-design.md); decision in
 [ADR-0020](../decisions/0020-review-transport-adapters.md).
 
-- **6a** — a forge on the guest (Tailscale-reachable) + the orchestrator pushes the
-  agent branch as a review (PR/MR) you can read on your phone. *No comment loop yet.*
+- **6a — done (local), verified:** the Forgejo adapter + orchestrator open a real
+  PR from a real agent task (body = the agent's explanation + the served-report
+  link, diff = the real change). Remote next: the same adapter against a NixOS
+  `services.forgejo` on Tailscale (a URL swap).
 - **6b** — the bounded comment → agent-revision loop (polling), per task until
   resolved.
 - **6c** — polish: notifications, mobile ergonomics, resolution/labels, concurrency.
