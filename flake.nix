@@ -224,6 +224,7 @@
             };
           in {
             inherit devShell agents layout;
+            tools = wsTools;
             app = {
               type = "app";
               program = "${appPkg}/bin/ragent-workspace";
@@ -249,6 +250,26 @@
           type = "app";
           program = "${serveApp}/bin/ragent-serve";
           meta.description = "Serve a project's agent task reports over HTTP (localhost by default).";
+        };
+        # Async review (ADR-0020, Phase 6a). `orchestrate` runs a task and opens a
+        # review (PR) via the forge adapter; `forgejo-local` is the dev-time forge.
+        apps.orchestrate = {
+          type = "app";
+          program = "${pkgs.writeShellApplication {
+            name = "ragent-orchestrate";
+            runtimeInputs = defaultWs.tools ++ defaultWs.agents.list ++ [ pkgs.curl pkgs.jq pkgs.git pkgs.python3 ];
+            text = ''exec ${toolsDir}/ragent-orchestrate.sh "$@"'';
+          }}/bin/ragent-orchestrate";
+          meta.description = "Run an agent task and open a review (PR) via the configured forge adapter.";
+        };
+        apps.forgejo-local = {
+          type = "app";
+          program = "${pkgs.writeShellApplication {
+            name = "ragent-forgejo-local";
+            runtimeInputs = [ pkgs.forgejo pkgs.git pkgs.curl ];
+            text = ''exec ${toolsDir}/forgejo-local.sh "$@"'';
+          }}/bin/ragent-forgejo-local";
+          meta.description = "Start a local dev Forgejo (127.0.0.1) + write the transport env.";
         };
         # `nix flake check` builds these (the jail + the shared CLI). The
         # confinement negative-control RUNTIME test and docs-sync run in CI
