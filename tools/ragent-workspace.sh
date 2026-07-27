@@ -22,6 +22,8 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # just before the Zellij launch, below, not here.
 LAYOUT="${RAGENT_LAYOUT:-}"
 RAGENT_RUN="${RAGENT_RUN_BIN:-$REPO/tools/ragent-run.sh}"
+# Host-side task-report generator (agent's explanation + diff → served HTML).
+RAGENT_REPORT="${RAGENT_REPORT_BIN:-$REPO/tools/ragent-report.py}"
 # Neon/pastel theming (Tokyo Night, greens neutralized): Zellij via --config,
 # lazygit via LG_CONFIG_FILE, neovim via the flake. Overridable per config repo.
 ZJ_CONFIG="${RAGENT_ZELLIJ_CONFIG:-$REPO/workspace/zellij-config.kdl}"
@@ -68,6 +70,13 @@ case "\$AGENT" in
 esac
 echo "launching \$AGENT (confined + capped) — logging to $LOG"
 "$RAGENT_RUN" "\$BIN" "\$@" 2>&1 | tee -a "$LOG"
+
+# After the agent finishes, generate the task report HOST-SIDE (outside the jail):
+# the agent's own .ragent/EXPLAIN.md + the real diff → self-contained HTML.
+if command -v python3 >/dev/null 2>&1; then
+  python3 "$RAGENT_REPORT" "$CLONE" "$TASK" "$BASE" >/dev/null 2>&1 \
+    && echo "task report → $CLONE/.ragent/reports/html/$TASK.html   (serve: nix run .#serve -- $CLONE)"
+fi
 EOF
 chmod +x "$CLONE/.ragent/launch-agent.sh"
 
@@ -77,6 +86,10 @@ AGENT clone — branch $BRANCH — confined via jail.nix (ADR-0016).
 Launch the agent here (confined + cgroup-capped; logs to .ragent/agent.log):
     ./.ragent/launch-agent.sh                              # opencode (default)
     RAGENT_AGENT=jailed-claude-code ./.ragent/launch-agent.sh
+
+A task report (the agent's .ragent/EXPLAIN.md + the diff, as HTML) is generated
+automatically after each run. Review it from any device:
+    nix run .#serve -- "$CLONE"     # then open http://127.0.0.1:8099/
 
 Human review (from the main tree, OUTSIDE the jail):
     git -C "$MAIN" fetch "$CLONE" "$BRANCH"

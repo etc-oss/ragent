@@ -161,6 +161,18 @@
             '';
           };
         };
+        # The whole tools/ dir as one store path so ragent-report.py can import its
+        # sibling okf_render.py at runtime (host-side task-report rendering).
+        toolsDir = ./tools;
+
+        # `nix run .#serve -- <project>` — serve a project's agent task reports over
+        # HTTP (localhost by default; Tailscale opt-in). Host-side oversight.
+        serveApp = pkgs.writeShellApplication {
+          name = "ragent-serve";
+          runtimeInputs = [ pkgs.python3 ];
+          text = ''exec ${toolsDir}/ragent-serve.sh "$@"'';
+        };
+
         # mkWorkspace: the parameterized workspace (ADR-0019). `projectTools` join
         # the agents' in-jail PATH, the Zellij pane PATH, and the devshell — so a
         # downstream project puts its runtime/test tools (e.g. python+pytest) where
@@ -170,11 +182,13 @@
           let
             agents = mkAgents projectTools;
             tools = sharedTools ++ projectTools;
-            wsTools = [ pkgs.zellij ragentNvim pkgs.lazygit pkgs.git pkgs.btop ] ++ lspServers ++ tools;
+            # python3 is for the host-side task-report generator (tools/ragent-report.py),
+            # which runs after each agent task in the agent pane — not for the jail.
+            wsTools = [ pkgs.zellij ragentNvim pkgs.lazygit pkgs.git pkgs.btop pkgs.python3 ] ++ lspServers ++ tools;
             # Tools the Zellij panes invoke at runtime, baked into the layout as an
             # explicit PATH so panes work from ANY launch context.
             paneBin = pkgs.lib.makeBinPath (
-              [ pkgs.bashInteractive pkgs.coreutils pkgs.git pkgs.lazygit pkgs.btop ragentNvim ]
+              [ pkgs.bashInteractive pkgs.coreutils pkgs.git pkgs.lazygit pkgs.btop pkgs.python3 ragentNvim ]
               ++ lspServers ++ tools ++ agents.list);
             layout = pkgs.writeText "ragent-workspace.kdl" (builtins.replaceStrings
               [ "@bash@" "@paneBin@" ]
@@ -185,6 +199,7 @@
               shellHook = ''
                 export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${layout}}"
                 export RAGENT_AGENT="''${RAGENT_AGENT:-${defaultAgent}}"
+                export RAGENT_REPORT_BIN="''${RAGENT_REPORT_BIN:-${toolsDir}/ragent-report.py}"
                 echo "ragent workspace devshell."
                 echo "  Launch:  ./tools/ragent-workspace.sh <project-dir> [task]  (or: nix run .#workspace)"
                 echo "  Tools:   zellij, nvim(+LSP), lazygit, git, git-surgeon, rg, fd, jq, btop${
@@ -199,11 +214,12 @@
               runtimeInputs = wsTools ++ agents.list;
               text = ''
                 export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${layout}}"
-                export RAGENT_RUN_BIN="''${RAGENT_RUN_BIN:-${./tools/ragent-run.sh}}"
+                export RAGENT_RUN_BIN="''${RAGENT_RUN_BIN:-${toolsDir}/ragent-run.sh}"
+                export RAGENT_REPORT_BIN="''${RAGENT_REPORT_BIN:-${toolsDir}/ragent-report.py}"
                 export RAGENT_ZELLIJ_CONFIG="''${RAGENT_ZELLIJ_CONFIG:-${./workspace/zellij-config.kdl}}"
                 export RAGENT_LAZYGIT_CONFIG="''${RAGENT_LAZYGIT_CONFIG:-${./workspace/lazygit-theme.yml}}"
                 export RAGENT_AGENT="''${RAGENT_AGENT:-${defaultAgent}}"
-                exec ${./tools/ragent-workspace.sh} "$@"
+                exec ${toolsDir}/ragent-workspace.sh "$@"
               '';
             };
           in {
@@ -229,6 +245,11 @@
         };
         devShells = { default = docsShell; workspace = defaultWs.devShell; };
         apps.workspace = defaultWs.app;
+        apps.serve = {
+          type = "app";
+          program = "${serveApp}/bin/ragent-serve";
+          meta.description = "Serve a project's agent task reports over HTTP (localhost by default).";
+        };
         # `nix flake check` builds these (the jail + the shared CLI). The
         # confinement negative-control RUNTIME test and docs-sync run in CI
         # (.github/workflows/ci.yml) — bubblewrap needs runtime namespaces a nix

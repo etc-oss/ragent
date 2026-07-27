@@ -46,9 +46,11 @@ correct, clear, and honest the first time.
 4. **Commit as you go — small and focused.** Your *commits* are what persist across
    restarts. Clear messages (the *why*) and hunk-level precision (`git-surgeon`)
    make review fast.
-5. **Explain your reasoning.** Leave a short account of what you changed and why —
-   it's how the human oversees your work without re-deriving it (ragent renders
-   this into a report for them).
+5. **Explain your reasoning.** Before you finish, write a short account of what you
+   changed and why to **`.ragent/EXPLAIN.md`** (a few sentences — decisions,
+   trade-offs, anything you were unsure about). ragent renders it next to your diff
+   into a report the human reviews, so this is how they oversee your work without
+   re-deriving it. If you skip it, they only get the raw diff.
 6. **When stuck or unsure, say so.** A clear "I couldn't do X because Y" or "I
    assumed Z" is far more useful than a confident guess or silent thrashing.
 7. **Leave the tree clean** — no stray files, tests green.
