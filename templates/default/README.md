@@ -14,12 +14,25 @@ template. ragent is an open-source, forkable AI-coding workspace: confined agent
 2. Run inside a Linux guest (bubblewrap needs Linux) — e.g. a Lima VM whose config
    lives in a config repo like your-config-repo. `nix flake lock` to pin.
 
+## This project's tools (so the agent can build/test it)
+
+Edit `projectTools` in `flake.nix` to add your stack (the template ships Python +
+pytest as an example). Those tools go on the **confined agent's in-jail PATH**, so
+the agent can run your build/tests *itself*, inside the jail — not just the human
+side. Dependencies are pinned by `flake.lock`; you update them with
+`nix flake update`. This is the dependency mechanism — **not** the Makefile.
+
 ## Use
 
 ```sh
-nix develop                 # zellij, nvim, lazygit, git, git-surgeon, rg, fd, jq + jailed agents
+nix develop                 # workspace tools + jailed agents + your projectTools
 nix run .#workspace -- .    # launch the two-side workspace on this project
 ```
+
+There's also a thin **`Makefile`** — `make workspace`, `make review`, `make test` —
+purely ergonomic aliases that delegate to `nix`. It is **not** a dependency
+manager (see [ADR-0019](https://github.com/REPLACE-ME/ragent/blob/main/docs/knowledge/decisions/0019-per-project-forking-and-dependencies.md));
+deleting it changes nothing about what's installed.
 
 The MACHINE side runs a coding agent confined to a **clone** of this project
 (the agent can only touch the clone + its own config; ADR-0016). You review its

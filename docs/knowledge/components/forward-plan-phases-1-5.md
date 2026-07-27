@@ -116,11 +116,13 @@ gaps were fixed to get here (see [ADR-0014](../decisions/0014-runtime-env-secret
 jailed-agents didn't forward the provider key (added `try-fwd-env` to every
 agent's base options), and Claude Code needs `CLAUDE_CODE_SIMPLE=1` to use the key.
 
-**Known limitation surfaced by the run:** the jail has no project *runtime*
-(`python` here), so the agent **could not run the tests itself** — it verified by
-inspection and was honest about it; the human side ran the tests (outside the jail,
-via nix). To let agents self-verify, the project's runtime/test tools should be on
-the in-jail PATH (a per-project extension of `sharedTools`). Tracked for Phase 3+.
+**Limitation surfaced by the run — now RESOLVED:** the jail initially had no
+project *runtime* (`python`), so the agent could not run the tests itself. Fixed by
+the per-project tools mechanism ([ADR-0019](../decisions/0019-per-project-forking-and-dependencies.md)):
+ragent exposes `lib.<system>.mkWorkspace { projectTools }`, a project adds its
+stack (e.g. python+pytest), and those tools land on the confined agent's in-jail
+PATH. Verified: a jailed Claude Code with `projectTools=[python+pytest]` ran
+`pytest -q` **inside its jail** → "2 passed". Agents can now self-verify.
 
 **Tasks**
 1. Stand up the long-lived Lima VM; confirm unprivileged user namespaces work

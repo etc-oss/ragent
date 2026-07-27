@@ -42,6 +42,19 @@ friendly aliases that *delegate to nix* (e.g. `make review` → `nix run .#works
 mechanism (no `apt install`, no `go get`, no version pinning in `make`); that is
 `flake.lock`'s job.
 
+## Implemented (2026-07-27)
+
+ragent exposes `lib.<system>.mkWorkspace { projectTools ? [ ], defaultAgent ? … }`.
+A project's `flake.nix` (from `templates/default`) sets `projectTools` to its own
+stack — e.g. `[ (pkgs.python3.withPackages (ps: [ ps.pytest ])) ]`. Those tools
+join `sharedTools` on the **confined agent's in-jail PATH** (and the pane PATH and
+devshell), so the agent can build and test the project *itself, inside the jail*.
+Verified end to end: a jailed Claude Code with `projectTools = [python+pytest]` ran
+`pytest -q` inside its jail and reported "2 passed" — closing the limitation the
+first real loop surfaced (the jail previously had no project runtime). The
+`templates/default/Makefile` is the thin task-runner (`make workspace|review|test`,
+each delegating to `nix`), explicitly not the dependency manager.
+
 ## Consequences
 
 ### Positive

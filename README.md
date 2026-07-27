@@ -146,9 +146,12 @@ nix develop                        # zellij, nvim, lazygit, git-surgeon, agents
 nix run .#workspace -- "$PWD" mytask
 ```
 
-- **Dependencies live in `flake.lock`** (content-pinned, offline-capable via
-  [ADR-0010](docs/knowledge/decisions/0010-local-mirror-resilience.md)), updated
-  deliberately with `nix flake update` — *not* in a Makefile.
+- **Your project's tools go in `projectTools`** in the generated `flake.nix`
+  (which calls `ragent.lib.<system>.mkWorkspace { projectTools = [ … ]; }`). They
+  land on the **confined agent's in-jail PATH**, so the agent can build and test
+  your project *itself, inside the jail* (verified: a jailed agent runs `pytest`
+  in-jail). Dependencies live in `flake.lock`, updated with `nix flake update` —
+  *not* in a Makefile.
 - **A Makefile is fine only as a thin task-runner** that delegates to nix
   (`make review` → `nix run .#workspace`); never as the dependency manager.
 - **Want personal defaults** (a default agent, extra tools, an IDE nvim, a theme)?

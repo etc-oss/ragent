@@ -105,19 +105,20 @@
         agentBaseOptions = ja.commonJailOptions
           ++ map jaCombinators.try-fwd-env [ "ANTHROPIC_API_KEY" "OPENAI_API_KEY" ];
 
-        jailed-opencode = ja.makeJailedOpencode { extraPkgs = sharedTools; baseJailOptions = agentBaseOptions; };
-        # CLAUDE_CODE_SIMPLE=1: make Claude Code authenticate strictly with
-        # ANTHROPIC_API_KEY (forwarded above) instead of OAuth/keychain, which don't
-        # exist in the jail. Without it a jailed run reports "Not logged in" even with
-        # a valid key. (Verified: the env var, not the --bare flag, takes effect.)
-        jailed-claude-code = ja.makeJailedClaudeCode {
-          extraPkgs = sharedTools;
-          env = { CLAUDE_CODE_SIMPLE = "1"; };
-          baseJailOptions = agentBaseOptions;
-        };
-        jailed-pi = ja.makeJailedPi { extraPkgs = sharedTools; baseJailOptions = agentBaseOptions; };
-        jailed-crush = ja.makeJailedCrush { extraPkgs = sharedTools; baseJailOptions = agentBaseOptions; };
-        allAgents = [ jailed-opencode jailed-claude-code jailed-pi jailed-crush ];
+        # Build the four jailed agents with a given tool set on their in-jail PATH.
+        # `projectTools` (from mkWorkspace, per project) joins sharedTools so a
+        # confined agent gets the project's runtime/test tools (e.g. python+pytest)
+        # and can self-verify — the limitation the first real loop surfaced.
+        # CLAUDE_CODE_SIMPLE=1 makes Claude Code auth strictly via ANTHROPIC_API_KEY
+        # (forwarded above); without it a jailed run reports "Not logged in".
+        mkAgents = projectTools:
+          let tools = sharedTools ++ projectTools; in rec {
+            jailed-opencode = ja.makeJailedOpencode { extraPkgs = tools; baseJailOptions = agentBaseOptions; };
+            jailed-claude-code = ja.makeJailedClaudeCode { extraPkgs = tools; env = { CLAUDE_CODE_SIMPLE = "1"; }; baseJailOptions = agentBaseOptions; };
+            jailed-pi = ja.makeJailedPi { extraPkgs = tools; baseJailOptions = agentBaseOptions; };
+            jailed-crush = ja.makeJailedCrush { extraPkgs = tools; baseJailOptions = agentBaseOptions; };
+            list = [ jailed-opencode jailed-claude-code jailed-pi jailed-crush ];
+          };
 
         # ---- Phase 2: the Zellij workspace (Linux) ----
         # neovim configured with LSP support (nvim-lspconfig) for the languages a
@@ -160,71 +161,82 @@
             '';
           };
         };
-        # Shared between the workspace devshell and the packaged launcher app.
-        workspaceTools = [ pkgs.zellij ragentNvim pkgs.lazygit pkgs.git pkgs.btop ] ++ lspServers ++ sharedTools;
-
-        # Tools the Zellij panes invoke at runtime (nvim/lazygit/git/tail/…). Baked
-        # into the layout as an explicit PATH so panes work from ANY launch context,
-        # not only the devshell (fixes the "launch from devshell or tools not found"
-        # footgun that could leave a broken session).
-        paneBin = pkgs.lib.makeBinPath ([ pkgs.bashInteractive pkgs.coreutils pkgs.git pkgs.lazygit pkgs.btop ragentNvim ] ++ lspServers ++ sharedTools ++ allAgents);
-        # The layout is a template; substitute the absolute bash + the pane PATH.
-        workspaceLayout = pkgs.writeText "ragent-workspace.kdl" (builtins.replaceStrings
-          [ "@bash@" "@paneBin@" ]
-          [ "${pkgs.bashInteractive}/bin/bash" paneBin ]
-          (builtins.readFile ./workspace/ragent-workspace.kdl));
-
-        workspaceShell = pkgs.mkShell {
-          packages = workspaceTools ++ allAgents;
-          shellHook = ''
-            export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${workspaceLayout}}"
-            echo "ragent workspace devshell (Phase 2–3)."
-            echo "  Launch:  ./tools/ragent-workspace.sh <project-dir> [task]"
-            echo "  Tools:   zellij, nvim (+LSP: nixd/basedpyright/bashls), lazygit, git, git-surgeon, rg, fd, jq"
-            echo "  Agents:  jailed-opencode, jailed-claude-code (run via tools/ragent-run.sh)"
-          '';
-        };
-
-        # A packaged, checkout-free launcher: `nix run .#workspace -- <project>`.
-        # Bundles the layout + ragent-run.sh as store paths and the workspace tools
-        # as runtime inputs, so downstream projects launch without cloning ragent.
-        workspaceApp = pkgs.writeShellApplication {
-          name = "ragent-workspace";
-          runtimeInputs = workspaceTools ++ allAgents;
-          # Provide ragent's defaults but DON'T clobber a consumer's overrides
-          # (e.g. your-config-repo sets RAGENT_ZELLIJ_CONFIG / RAGENT_AGENT). The
-          # ''${VAR:-default} form emits a literal shell parameter-expansion while
-          # still interpolating the store-path default.
-          text = ''
-            export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${workspaceLayout}}"
-            export RAGENT_RUN_BIN="''${RAGENT_RUN_BIN:-${./tools/ragent-run.sh}}"
-            export RAGENT_ZELLIJ_CONFIG="''${RAGENT_ZELLIJ_CONFIG:-${./workspace/zellij-config.kdl}}"
-            export RAGENT_LAZYGIT_CONFIG="''${RAGENT_LAZYGIT_CONFIG:-${./workspace/lazygit-theme.yml}}"
-            exec ${./tools/ragent-workspace.sh} "$@"
-          '';
-        };
+        # mkWorkspace: the parameterized workspace (ADR-0019). `projectTools` join
+        # the agents' in-jail PATH, the Zellij pane PATH, and the devshell — so a
+        # downstream project puts its runtime/test tools (e.g. python+pytest) where
+        # the confined agent can use them. Ragent's own outputs are `mkWorkspace {}`
+        # (behavior-preserving). Consumers call `ragent.lib.<system>.mkWorkspace`.
+        mkWorkspace = { projectTools ? [ ], defaultAgent ? "jailed-opencode" }:
+          let
+            agents = mkAgents projectTools;
+            tools = sharedTools ++ projectTools;
+            wsTools = [ pkgs.zellij ragentNvim pkgs.lazygit pkgs.git pkgs.btop ] ++ lspServers ++ tools;
+            # Tools the Zellij panes invoke at runtime, baked into the layout as an
+            # explicit PATH so panes work from ANY launch context.
+            paneBin = pkgs.lib.makeBinPath (
+              [ pkgs.bashInteractive pkgs.coreutils pkgs.git pkgs.lazygit pkgs.btop ragentNvim ]
+              ++ lspServers ++ tools ++ agents.list);
+            layout = pkgs.writeText "ragent-workspace.kdl" (builtins.replaceStrings
+              [ "@bash@" "@paneBin@" ]
+              [ "${pkgs.bashInteractive}/bin/bash" paneBin ]
+              (builtins.readFile ./workspace/ragent-workspace.kdl));
+            devShell = pkgs.mkShell {
+              packages = wsTools ++ agents.list;
+              shellHook = ''
+                export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${layout}}"
+                export RAGENT_AGENT="''${RAGENT_AGENT:-${defaultAgent}}"
+                echo "ragent workspace devshell."
+                echo "  Launch:  ./tools/ragent-workspace.sh <project-dir> [task]  (or: nix run .#workspace)"
+                echo "  Tools:   zellij, nvim(+LSP), lazygit, git, git-surgeon, rg, fd, jq, btop${
+                  pkgs.lib.optionalString (projectTools != [ ]) " + project tools"}"
+              '';
+            };
+            # A packaged, checkout-free launcher: `nix run .#workspace -- <project>`.
+            # ''${VAR:-default} keeps a consumer's overrides (RAGENT_* set upstream) —
+            # e.g. your-config-repo's zellij theme / editor / agent.
+            appPkg = pkgs.writeShellApplication {
+              name = "ragent-workspace";
+              runtimeInputs = wsTools ++ agents.list;
+              text = ''
+                export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${layout}}"
+                export RAGENT_RUN_BIN="''${RAGENT_RUN_BIN:-${./tools/ragent-run.sh}}"
+                export RAGENT_ZELLIJ_CONFIG="''${RAGENT_ZELLIJ_CONFIG:-${./workspace/zellij-config.kdl}}"
+                export RAGENT_LAZYGIT_CONFIG="''${RAGENT_LAZYGIT_CONFIG:-${./workspace/lazygit-theme.yml}}"
+                export RAGENT_AGENT="''${RAGENT_AGENT:-${defaultAgent}}"
+                exec ${./tools/ragent-workspace.sh} "$@"
+              '';
+            };
+          in {
+            inherit devShell agents layout;
+            app = {
+              type = "app";
+              program = "${appPkg}/bin/ragent-workspace";
+              meta.description = "Launch the ragent two-side human/machine workspace on a project.";
+            };
+          };
+        defaultWs = mkWorkspace { };
       in
       {
         devShells.default = docsShell;
       }
       // lib.optionalAttrs isLinux {
         packages = {
-          inherit jailed-probe jailed-opencode jailed-claude-code jailed-pi jailed-crush git-surgeon;
+          inherit jailed-probe git-surgeon;
+          inherit (defaultWs.agents) jailed-opencode jailed-claude-code jailed-pi jailed-crush;
           # Zellij itself, unconfined, for session management (attach/detach/list/
           # kill) independent of a workspace launch: `nix run .#zellij -- <args>`.
           zellij = pkgs.zellij;
         };
-        devShells = { default = docsShell; workspace = workspaceShell; };
-        apps.workspace = {
-          type = "app";
-          program = "${workspaceApp}/bin/ragent-workspace";
-          meta.description = "Launch the ragent two-side human/machine workspace on a project.";
-        };
+        devShells = { default = docsShell; workspace = defaultWs.devShell; };
+        apps.workspace = defaultWs.app;
         # `nix flake check` builds these (the jail + the shared CLI). The
         # confinement negative-control RUNTIME test and docs-sync run in CI
         # (.github/workflows/ci.yml) — bubblewrap needs runtime namespaces a nix
         # build sandbox can't guarantee.
         checks = { inherit jailed-probe git-surgeon; };
+        # The parameterized workspace, so a project can add its own in-jail tools
+        # (ADR-0019):  ragent.lib.<system>.mkWorkspace { projectTools = [ … ]; }
+        lib = { inherit mkWorkspace sharedTools; };
       }
     ))
     // {
