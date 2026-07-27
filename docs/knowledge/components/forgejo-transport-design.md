@@ -63,10 +63,14 @@ per-project relaxation of confinement, not a default.
   `services.forgejo` (and `services.gitlab`); run it on the guest, on the
   **Tailscale** mesh so a phone reaches it privately (no public port). Shared
   instance by default; **instance-per-project** is a config option for enterprise.
-- **The orchestrator + adapters** → **ragent** (the reusable framework), exposed
-  like the workspace: a `lib.<system>.mkOrchestrator` / `apps.orchestrate` a project
-  invokes. Reuses the clone/boundary logic in `tools/ragent-workspace.sh` and the
-  confined-agent launch in `tools/ragent-confine.sh` + `.ragent/spawn-agent.sh`.
+- **The orchestrator + adapters** → **ragent** (the reusable framework), in Python
+  (ADR-0022): `tools/orchestrator.py` + `tools/adapters/`, driven by the unified
+  `ragent task orchestrate` CLI (ADR-0023). Reuses the clone/boundary logic in
+  `tools/ragent-workspace.sh` and the confined-agent launch in
+  `tools/ragent-confine.sh` + `.ragent/spawn-agent.sh`.
+- **The dev-forge harness** (`forgejo-local`) → **your-config-repo** (ADR-0018) —
+  standing up a forge is deployment config. ragent keeps only a throwaway
+  **ephemeral-forge fixture** (`tests/ephemeral_forge.py`) to test its own adapter.
 - **Per project** → its `reviewConfig` in the project flake (adapter, remote,
   `autoMerge`, `pollInterval`, bounds — ADR-0020), plus its repo on the forge. The
   forge token is runtime-forwarded (like the API key, ADR-0014), never in the repo.
@@ -113,14 +117,15 @@ bespoke database. The orchestrator tracks only iteration count / caps in the clo
 
 ## Phasing
 
-- **6a — BUILT & verified locally (2026-07-27):** `tools/adapters/forgejo.sh` +
-  `tools/ragent-orchestrate.sh` + `tools/forgejo-local.sh` (+ `nix run
-  .#orchestrate` / `.#forgejo-local`). A real agent task opened PR #1 on a local
-  Forgejo — body = the agent's `EXPLAIN.md` + the served-report link, diff = the
-  real change, mergeable. **Remote next:** the same adapter against a NixOS
-  `services.forgejo` on Tailscale in your-config-repo — a URL swap, no code change.
-- **6b:** the comment → agent-revision loop (poll `status`/`comments`, `report`
-  back), bounded, per task until resolved.
+- **6a — BUILT & verified locally (2026-07-27); rebuilt in Python (ADR-0022/0023),
+  re-verified at parity:** `tools/orchestrator.py` + `tools/adapters/forgejo.py`,
+  driven by `ragent task orchestrate`; the dev forge is `nix run .#forgejo-local` in
+  **your-config-repo**. A real confined agent task opened a real mergeable PR on a
+  local Forgejo — body = the agent's `EXPLAIN.md` + the served-report link
+  (`ragent task review`), diff = the real change. **Remote next:** the same adapter
+  against a NixOS `services.forgejo` on Tailscale — a URL swap, no code change.
+- **6b:** the bounded `examine` → agent-revision → `reply` → `merge` loop (poll
+  `status`, feed new review notes to the agent), per task until resolved.
 - **6c:** polish — notifications tuning, mobile ergonomics, resolution/labels,
   multiple concurrent tasks.
 

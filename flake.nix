@@ -253,16 +253,6 @@
         apps.task-window = mkTaskAlias "window" "Launch/attach the two-side human/machine TUI workspace on a project.";
         apps.task-orchestrate = mkTaskAlias "orchestrate" "Run an agent task and open a review (PR) via the configured forge adapter.";
         apps.task-review = mkTaskAlias "review" "Serve a project's per-task HTML reports over HTTP (localhost by default).";
-        # Dev-time forge (moves to your-config-repo in G2/ADR-0018 — VM/deploy config).
-        apps.forgejo-local = {
-          type = "app";
-          program = "${pkgs.writeShellApplication {
-            name = "ragent-forgejo-local";
-            runtimeInputs = [ pkgs.forgejo pkgs.git pkgs.curl ];
-            text = ''exec ${toolsDir}/forgejo-local.sh "$@"'';
-          }}/bin/ragent-forgejo-local";
-          meta.description = "Start a local dev Forgejo (127.0.0.1) + write the transport env.";
-        };
         # `nix flake check` builds these (the jail + the shared CLI). The
         # confinement negative-control RUNTIME test and docs-sync run in CI
         # (.github/workflows/ci.yml) — bubblewrap needs runtime namespaces a nix
