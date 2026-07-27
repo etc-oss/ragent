@@ -11,6 +11,9 @@ timestamp: 2026-07-26
 
 Architecture concepts and planning.
 
+- [COMP-roadmap — Roadmap & future guidelines](roadmap.md)
+  — the long view: current state, Phase 6, future direction, guiding principles.
+
 - [COMP-architecture-overview — Architecture overview](architecture-overview.md)
   — the layered map (host → VM → jail → panes) and how the ADRs fit together.
 - [COMP-forward-plan — Forward plan (Phases 1–5)](forward-plan-phases-1-5.md)

@@ -1,20 +1,22 @@
 ---
 type: component
 id: COMP-forgejo-transport
-title: 'Forgejo-as-transport for async agent review (design, Phase 6a)'
-description: A concrete, implementable design for the async review loop using a shared self-hosted Forgejo — the orchestrator pushes the agent's branch as a PR from outside the jail; the user reviews on the go; comments drive a bounded agent revision loop.
-tags: [proposal, forgejo, review, orchestrator, phase-6, security]
+title: 'Async agent review transport (adapter-based, Phase 6a)'
+description: A concrete design for the async review loop — a transport-agnostic orchestrator drives a pluggable adapter (Forgejo/GitLab/GitHub/SSH), pushes the agent branch from outside the jail, and runs a bounded comment loop until the user marks the task resolved. Configured per project; access via Tailscale.
+tags: [proposal, review, adapter, forgejo, gitlab, github, orchestrator, phase-6, security]
 timestamp: 2026-07-27
 ---
 
-# Forgejo-as-transport for async agent review (design, Phase 6a)
+# Async agent review transport (adapter-based, Phase 6a)
 
 Concrete design for the async web-review loop from the
 [Phase 6 evaluation](phase6-remote-and-async-review.md), using the **buy-not-build**
-option it recommended: a self-hosted **Forgejo** provides diff review, line
-comments, resolution, auth, a mobile UI, and notifications for free. **Design for
-review — not yet built.** Owner decisions taken: **one shared guest forge**;
-capture the design first.
+option it recommended: a self-hosted forge provides diff review, line comments,
+resolution, auth, a mobile UI, and notifications for free. Per
+[ADR-0020](../decisions/0020-review-transport-adapters.md) the forge is reached
+through a **pluggable adapter** — **Forgejo is the default/reference adapter**, with
+GitLab, GitHub (Enterprise), and a git-over-SSH adapter following the same
+interface. **Design for review — not yet built.**
 
 ## Architecture
 
@@ -33,19 +35,36 @@ does every privileged thing — push, open PR, read/write comments — with cred
 kept out of the jail ([ADR-0011](../decisions/0011-git-worktree-review-boundary.md) /
 [ADR-0014](../decisions/0014-runtime-env-secret-forwarding.md)).
 
+## The adapter (ADR-0020)
+
+The orchestrator is **transport-agnostic**; it drives a small adapter interface, so
+the same loop works over Forgejo, GitLab, GitHub (Enterprise), or bare git-over-SSH:
+
+| Verb | Meaning |
+|---|---|
+| `ensure` | ensure the project's remote/repo exists (create if needed — supports instance-per-project) |
+| `push <branch>` | push the agent branch to the transport (**outside** the jail) |
+| `open-review <branch> <base>` | open/update the review unit (PR / MR / …); return id |
+| `status <review>` | `pending` \| `changes-requested` \| `approved` |
+| `comments <review>` | unresolved review comments (fed back to the agent) |
+| `merge <review>` | merge (only when `autoMerge` and approved) |
+
+Adapters: `forgejo` (default), `gitlab`, `github`, `ssh`. Each is a small script/
+module host-side; "PR", "MR", and "review" all map to these verbs.
+
 ## Components & where they live (ADR-0018 split)
 
-- **Forgejo service** → the **VM config repo (your-config-repo)**, since it is
-  deploy/VM specifics. NixOS ships `services.forgejo`; run it on the guest bound to
-  `127.0.0.1:3000`, reached from a phone via SSH tunnel or HTTPS+token. One
-  instance, one org, a repo per project.
-- **The orchestrator** → **ragent** (the reusable framework), exposed like the
-  workspace: a script + a `lib.<system>.mkOrchestrator`/`apps.orchestrate` that a
-  project invokes. It reuses the existing clone/boundary logic in
-  `tools/ragent-workspace.sh` and the confined-agent launch in
-  `tools/ragent-run.sh` + `.ragent/launch-agent.sh`.
-- **Per project** → its repo on the forge; the orchestrator run per task. No new
-  per-project infra (the shared forge serves all).
+- **Forge service** → the **VM config repo (your-config-repo)**. NixOS ships
+  `services.forgejo` (and `services.gitlab`); run it on the guest, on the
+  **Tailscale** mesh so a phone reaches it privately (no public port). Shared
+  instance by default; **instance-per-project** is a config option for enterprise.
+- **The orchestrator + adapters** → **ragent** (the reusable framework), exposed
+  like the workspace: a `lib.<system>.mkOrchestrator` / `apps.orchestrate` a project
+  invokes. Reuses the clone/boundary logic in `tools/ragent-workspace.sh` and the
+  confined-agent launch in `tools/ragent-run.sh` + `.ragent/launch-agent.sh`.
+- **Per project** → its `reviewConfig` in the project flake (adapter, remote,
+  `autoMerge`, `pollInterval`, bounds — ADR-0020), plus its repo on the forge. The
+  forge token is runtime-forwarded (like the API key, ADR-0014), never in the repo.
 
 ## The loop (one task)
 
@@ -61,8 +80,10 @@ kept out of the jail ([ADR-0011](../decisions/0011-git-worktree-review-boundary.
    polls the API). It collects unresolved comments, re-prompts the confined agent
    ("address these review comments: …"), the agent revises + commits in the clone,
    and the orchestrator pushes again (updates the PR).
-6. Repeat 4–5 until you **approve** — the human gate. Merge is your action (or
-   auto-merge-on-approve, configurable; the gate stays human).
+6. Repeat 4–5 **until you approve** (the task is *resolved*) — the human gate. On
+   approve, the orchestrator merges if `autoMerge = true`, else it stops and you
+   merge (per-project `autoMerge`). If a bound trips first, it labels the review
+   **needs-human** and stops. The orchestrator lives only for this task.
 
 ## Security (the crux — do not undercut confinement)
 
@@ -93,20 +114,19 @@ bespoke database. The orchestrator tracks only iteration count / caps in the clo
 - **6c:** polish — notifications tuning, mobile ergonomics, resolution/labels,
   multiple concurrent tasks.
 
-## Open decisions (for the owner, before 6a code)
+## Decisions (resolved — ADR-0020)
 
-1. **Access from the phone:** SSH tunnel to `127.0.0.1:3000` (simplest, most
-   secure) vs. Forgejo HTTPS on a LAN/Tailscale address (more convenient, needs a
-   cert). Recommend SSH tunnel / Tailscale first.
-2. **Auto-merge on approve** vs. approve-then-you-merge. Recommend the latter
-   (explicit human merge) initially.
-3. **Trigger:** webhook (needs the orchestrator reachable by the forge) vs. the
-   orchestrator **polling** the PR API (simpler, no inbound port). Recommend polling
-   for 6b's first cut.
-4. **Where the orchestrator runs long-term:** a foreground run you start per task,
-   vs. a small persistent guest service. Recommend per-task foreground for 6a/6b.
+1. **Access:** **Tailscale** — the forge/orchestrator on a private mesh, reachable
+   from a phone without a public port or a per-session tunnel.
+2. **Auto-merge vs. manual merge:** a **per-project variable** (`autoMerge`),
+   default `false` (explicit human merge).
+3. **Trigger:** **polling**, with a **per-project `pollInterval`** (no inbound port).
+4. **Orchestrator lifetime:** **per task**, running the bounded loop **until the
+   task is marked resolved** (approved) — or a bound trips (→ "needs human").
 
 ## Links
+- [ADR-0020 — Review transport as a pluggable adapter](../decisions/0020-review-transport-adapters.md)
+- [Roadmap & future guidelines](roadmap.md)
 - [Phase 6 evaluation](phase6-remote-and-async-review.md) (this implements its forge option)
 - [ADR-0016 — Agent works in a clone](../decisions/0016-agent-clone-not-worktree.md),
   [ADR-0011 — Git review boundary](../decisions/0011-git-worktree-review-boundary.md)
