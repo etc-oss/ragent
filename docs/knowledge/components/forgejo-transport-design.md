@@ -38,7 +38,10 @@ kept out of the jail ([ADR-0011](../decisions/0011-git-worktree-review-boundary.
 ## The adapter (ADR-0020)
 
 The orchestrator is **transport-agnostic**; it drives a small adapter interface, so
-the same loop works over Forgejo, GitLab, GitHub (Enterprise), or bare git-over-SSH:
+the same loop works over Forgejo, GitLab, GitHub (Enterprise), or bare git-over-SSH.
+*The verb set below is the original 7; it is finalized as a 9-verb superset with a
+`capabilities` verb in [ADR-0022](../decisions/0022-python-adapters-verb-superset-capabilities.md)
+(`ensure`→`init`+`ping`, `open-review`→`handover`, `comments`→`examine`, `report`→`reply`).*
 
 | Verb | Meaning |
 |---|---|
