@@ -154,7 +154,8 @@ def review_loop(adapter, review, clone, branch, base, agent, *,
             continue  # re-check status immediately after a revision
         # 'waiting': nothing new from the human. Wall-clock = orchestrator lifetime.
         if (time.monotonic() - start) > bounds["max_wall_hours"] * 3600:
-            print("⏹ orchestrator lifetime cap (%gh) reached — stopping; re-run to resume."
+            print("⏹ orchestrator lifetime cap (%gh) reached — stopping (the PR stays "
+                  "open). A re-run restarts the task, not the poll (6c: persist loop state)."
                   % bounds["max_wall_hours"])
             return "timeout"
         time.sleep(poll_interval)

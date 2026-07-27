@@ -39,8 +39,11 @@ what each bound is *for*:
   the go" means human latency is *hours* (asleep, in a meeting). A minutes-scale
   wall-clock (ADR-0020 said 60 min) would fire on a **perfectly healthy PR the human
   simply hasn't looked at yet** and cry "needs-human." So wall-clock is reframed as
-  "the orchestrator has lived long enough, stop and **re-run to resume**" — defaulted
-  to 24h, and it does **not** post needs-human (nothing is wrong).
+  "the orchestrator has lived long enough, **stop cleanly** (the PR stays open)" —
+  defaulted to 24h, and it does **not** post needs-human (nothing is wrong). A re-run
+  **restarts the task** (re-executes the original prompt on the reused clone with a
+  fresh `processed` set), it does not resume the poll — persisting loop state to
+  `.ragent/` to make it truly resumable is a 6c item.
 - **"Cost" = cumulative *agent* runtime.** We can't get token counts from the jailed
   agent, but we can time each revise call and cap the **sum** — which, unlike
   wall-clock-since-open, never counts human idle. A real, measurable cost proxy.
