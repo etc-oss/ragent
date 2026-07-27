@@ -34,3 +34,4 @@ All were seeded from the [genesis conversation](../sessions/0001-genesis-archite
 | [0018](0018-split-your-config-repo.md) | Split personal config into your-config-repo (realizes ADR-0012) | accepted |
 | [0019](0019-per-project-forking-and-dependencies.md) | Per-project forking and dependency model (flake template + pinned input, not Makefiles) | accepted |
 | [0020](0020-review-transport-adapters.md) | Async review transport as a pluggable adapter, configured per project | accepted |
+| [0021](0021-per-task-explanatory-report.md) | Per-task explanatory HTML report, served for universal oversight | accepted |

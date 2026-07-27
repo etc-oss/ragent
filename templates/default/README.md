@@ -38,3 +38,17 @@ The MACHINE side runs a coding agent confined to a **clone** of this project
 (the agent can only touch the clone + its own config; ADR-0016). You review its
 proposed commits from the HUMAN side and merge what you accept — nothing lands
 without that gate.
+
+## Reviewing on any device
+
+After each task, ragent renders the agent's own explanation (`.ragent/EXPLAIN.md`)
+plus the real diff into a **self-contained HTML report** and can serve it — review
+from your phone/laptop without the TUI:
+
+```sh
+nix run .#serve -- <clone-dir>          # http://127.0.0.1:8099/  (localhost by default)
+RAGENT_SERVE_HOST=<tailnet-ip> nix run .#serve -- <clone-dir>   # reach it over Tailscale
+```
+
+It's convenient but unauthenticated — keep it on localhost or a private Tailscale
+address (ADR-0021).
