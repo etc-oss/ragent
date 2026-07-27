@@ -34,7 +34,7 @@
       # neovim, lazygit, git-surgeon, …) + the jailed agents + YOUR projectTools.
       devShells.${system}.default = ws.devShell;
 
-      # `nix run .#workspace -- .` launches the two-side HUMAN/MACHINE workspace
+      # `nix run .#task-window -- .` launches the two-side HUMAN/MACHINE workspace
       # (ADR-0005) with the clone review boundary (ADR-0011/0016) for THIS project.
       # The confined agent has projectTools on its PATH, so it can run your tests.
       apps.${system}.workspace = ws.app;

@@ -36,3 +36,4 @@ All were seeded from the [genesis conversation](../sessions/0001-genesis-archite
 | [0020](0020-review-transport-adapters.md) | Async review transport as a pluggable adapter, configured per project | accepted |
 | [0021](0021-per-task-explanatory-report.md) | Per-task explanatory HTML report, served for universal oversight | accepted |
 | [0022](0022-python-adapters-verb-superset-capabilities.md) | Review adapters in Python; a finalized verb superset with capabilities | accepted |
+| [0023](0023-unified-ragent-cli.md) | Unified `ragent` CLI (task subcommands) over flat per-app entry points | accepted |

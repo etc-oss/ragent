@@ -26,7 +26,7 @@ side. Dependencies are pinned by `flake.lock`; you update them with
 
 ```sh
 nix develop                 # workspace tools + jailed agents + your projectTools
-nix run .#workspace -- .    # launch the two-side workspace on this project
+nix run .#task-window -- .    # launch the two-side workspace on this project
 ```
 
 There's also a thin **`Makefile`** — `make workspace`, `make review`, `make test` —
@@ -46,8 +46,8 @@ plus the real diff into a **self-contained HTML report** and can serve it — re
 from your phone/laptop without the TUI:
 
 ```sh
-nix run .#serve -- <clone-dir>          # http://127.0.0.1:8099/  (localhost by default)
-RAGENT_SERVE_HOST=<tailnet-ip> nix run .#serve -- <clone-dir>   # reach it over Tailscale
+nix run .#task-review -- <clone-dir>          # http://127.0.0.1:8099/  (localhost by default)
+RAGENT_SERVE_HOST=<tailnet-ip> nix run .#task-review -- <clone-dir>   # reach it over Tailscale
 ```
 
 It's convenient but unauthenticated — keep it on localhost or a private Tailscale

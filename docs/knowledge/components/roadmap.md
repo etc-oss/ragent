@@ -48,7 +48,7 @@ Enterprise, git-over-SSH), configured per project (`reviewConfig`: adapter, remo
 
 **Already shipped — the served per-task report** ([ADR-0021](../decisions/0021-per-task-explanatory-report.md)):
 alongside every task, the agent's own explanation + the real diff render to a
-self-contained HTML report, served (`nix run .#serve`, localhost/Tailscale). This
+self-contained HTML report, served (`nix run .#task-review`, localhost/Tailscale). This
 is the forge-independent oversight channel — universal, reviewable from any device —
 and the substrate a forge `report` verb can later post.
 

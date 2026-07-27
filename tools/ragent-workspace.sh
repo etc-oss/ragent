@@ -74,7 +74,7 @@ echo "launching \$AGENT (confined + capped) — logging to $LOG"
 # the agent's own .ragent/EXPLAIN.md + the real diff → self-contained HTML.
 if command -v python3 >/dev/null 2>&1; then
   python3 "$RAGENT_REPORT" "$CLONE" "$TASK" "$BASE" >/dev/null 2>&1 \
-    && echo "task report → $CLONE/.ragent/reports/html/$TASK.html   (serve: nix run .#serve -- $CLONE)"
+    && echo "task report → $CLONE/.ragent/reports/html/$TASK.html   (serve: nix run .#task-review -- $CLONE)"
 fi
 EOF
 chmod +x "$CLONE/.ragent/spawn-agent.sh"
@@ -88,7 +88,7 @@ Launch the agent here (confined + cgroup-capped; logs to .ragent/agent.log):
 
 A task report (the agent's .ragent/EXPLAIN.md + the diff, as HTML) is generated
 automatically after each run. Review it from any device:
-    nix run .#serve -- "$CLONE"     # then open http://127.0.0.1:8099/
+    nix run .#task-review -- "$CLONE"     # then open http://127.0.0.1:8099/
 
 Human review (from the main tree, OUTSIDE the jail):
     git -C "$MAIN" fetch "$CLONE" "$BRANCH"
@@ -115,7 +115,7 @@ fi
 command -v zellij >/dev/null || { echo "zellij not on PATH — run inside 'nix develop .#workspace'" >&2; exit 1; }
 
 # A layout is required to launch the TUI (but not for the setup-only path above).
-: "${LAYOUT:?run via 'nix develop .#workspace' or 'nix run .#workspace' (RAGENT_LAYOUT unset)}"
+: "${LAYOUT:?run via 'nix develop .#workspace' or 'nix run .#task-window' (RAGENT_LAYOUT unset)}"
 
 # Zellij cannot render on a dumb/unset terminal (a common cause of an apparently
 # frozen TUI, e.g. under `limactl shell` which may pass TERM=dumb). Force a sane one.

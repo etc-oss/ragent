@@ -165,14 +165,6 @@
         # sibling okf_render.py at runtime (host-side task-report rendering).
         toolsDir = ./tools;
 
-        # `nix run .#serve -- <project>` — serve a project's agent task reports over
-        # HTTP (localhost by default; Tailscale opt-in). Host-side oversight.
-        serveApp = pkgs.writeShellApplication {
-          name = "ragent-serve";
-          runtimeInputs = [ pkgs.python3 ];
-          text = ''exec ${toolsDir}/ragent-serve.sh "$@"'';
-        };
-
         # mkWorkspace: the parameterized workspace (ADR-0019). `projectTools` join
         # the agents' in-jail PATH, the Zellij pane PATH, and the devshell — so a
         # downstream project puts its runtime/test tools (e.g. python+pytest) where
@@ -194,24 +186,14 @@
               [ "@bash@" "@paneBin@" ]
               [ "${pkgs.bashInteractive}/bin/bash" paneBin ]
               (builtins.readFile ./workspace/ragent-workspace.kdl));
-            devShell = pkgs.mkShell {
-              packages = wsTools ++ agents.list;
-              shellHook = ''
-                export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${layout}}"
-                export RAGENT_AGENT="''${RAGENT_AGENT:-${defaultAgent}}"
-                export RAGENT_REPORT_BIN="''${RAGENT_REPORT_BIN:-${toolsDir}/ragent-report.py}"
-                echo "ragent workspace devshell."
-                echo "  Launch:  ./tools/ragent-workspace.sh <project-dir> [task]  (or: nix run .#workspace)"
-                echo "  Tools:   zellij, nvim(+LSP), lazygit, git, git-surgeon, rg, fd, jq, btop${
-                  pkgs.lib.optionalString (projectTools != [ ]) " + project tools"}"
-              '';
-            };
-            # A packaged, checkout-free launcher: `nix run .#workspace -- <project>`.
-            # ''${VAR:-default} keeps a consumer's overrides (RAGENT_* set upstream) —
-            # e.g. your-config-repo's zellij theme / editor / agent.
-            appPkg = pkgs.writeShellApplication {
-              name = "ragent-workspace";
-              runtimeInputs = wsTools ++ agents.list;
+            # The unified human-facing CLI (ADR-0023): `ragent task <window|orchestrate|
+            # review|list|attach|kill>`. One closure carries everything the subcommands
+            # need — the TUI stack, the four agents, python3, git, bash. The adapter
+            # uses stdlib urllib (ADR-0022), so no curl/jq. ''${VAR:-default} keeps a
+            # consumer's RAGENT_* overrides (e.g. your-config-repo's theme / agent).
+            cliApp = pkgs.writeShellApplication {
+              name = "ragent";
+              runtimeInputs = wsTools ++ agents.list ++ [ pkgs.bashInteractive pkgs.coreutils ];
               text = ''
                 export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${layout}}"
                 export RAGENT_RUN_BIN="''${RAGENT_RUN_BIN:-${toolsDir}/ragent-confine.sh}"
@@ -219,19 +201,36 @@
                 export RAGENT_ZELLIJ_CONFIG="''${RAGENT_ZELLIJ_CONFIG:-${./workspace/zellij-config.kdl}}"
                 export RAGENT_LAZYGIT_CONFIG="''${RAGENT_LAZYGIT_CONFIG:-${./workspace/lazygit-theme.yml}}"
                 export RAGENT_AGENT="''${RAGENT_AGENT:-${defaultAgent}}"
-                exec ${toolsDir}/ragent-workspace.sh "$@"
+                exec python3 ${toolsDir}/ragent_cli.py "$@"
+              '';
+            };
+            devShell = pkgs.mkShell {
+              packages = wsTools ++ agents.list ++ [ cliApp ];
+              shellHook = ''
+                export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${layout}}"
+                export RAGENT_AGENT="''${RAGENT_AGENT:-${defaultAgent}}"
+                export RAGENT_REPORT_BIN="''${RAGENT_REPORT_BIN:-${toolsDir}/ragent-report.py}"
+                echo "ragent workspace devshell."
+                echo "  Launch:  ragent task window <project-dir> [task]   (or: nix run . -- task window <project-dir>)"
+                echo "  Tools:   zellij, nvim(+LSP), lazygit, git, git-surgeon, rg, fd, jq, btop${
+                  pkgs.lib.optionalString (projectTools != [ ]) " + project tools"}"
               '';
             };
           in {
             inherit devShell agents layout;
             tools = wsTools;
-            app = {
-              type = "app";
-              program = "${appPkg}/bin/ragent-workspace";
-              meta.description = "Launch the ragent two-side human/machine workspace on a project.";
-            };
+            cli = cliApp;
           };
         defaultWs = mkWorkspace { };
+        # A thin flat alias for a `ragent task <sub>` subcommand: `nix run .#task-<sub>`.
+        mkTaskAlias = sub: desc: {
+          type = "app";
+          program = "${pkgs.writeShellApplication {
+            name = "ragent-task-${sub}";
+            text = ''exec ${defaultWs.cli}/bin/ragent task ${sub} "$@"'';
+          }}/bin/ragent-task-${sub}";
+          meta.description = desc;
+        };
       in
       {
         devShells.default = docsShell;
@@ -240,28 +239,21 @@
         packages = {
           inherit jailed-probe git-surgeon;
           inherit (defaultWs.agents) jailed-opencode jailed-claude-code jailed-pi jailed-crush;
-          # Zellij itself, unconfined, for session management (attach/detach/list/
-          # kill) independent of a workspace launch: `nix run .#zellij -- <args>`.
-          zellij = pkgs.zellij;
         };
         devShells = { default = docsShell; workspace = defaultWs.devShell; };
-        apps.workspace = defaultWs.app;
-        apps.serve = {
+
+        # The unified CLI is the default app (ADR-0023). Session management
+        # (list/attach/kill — the old #zellij app) is folded into `ragent task …`.
+        apps.default = {
           type = "app";
-          program = "${serveApp}/bin/ragent-serve";
-          meta.description = "Serve a project's agent task reports over HTTP (localhost by default).";
+          program = "${defaultWs.cli}/bin/ragent";
+          meta.description = "ragent — confined agents with human oversight (task window/orchestrate/review/list/attach/kill).";
         };
-        # Async review (ADR-0020, Phase 6a). `orchestrate` runs a task and opens a
-        # review (PR) via the forge adapter; `forgejo-local` is the dev-time forge.
-        apps.orchestrate = {
-          type = "app";
-          program = "${pkgs.writeShellApplication {
-            name = "ragent-orchestrate";
-            runtimeInputs = defaultWs.tools ++ defaultWs.agents.list ++ [ pkgs.curl pkgs.jq pkgs.git pkgs.python3 ];
-            text = ''exec ${toolsDir}/ragent-orchestrate.sh "$@"'';
-          }}/bin/ragent-orchestrate";
-          meta.description = "Run an agent task and open a review (PR) via the configured forge adapter.";
-        };
+        # Thin aliases so `nix run .#task-<x> -- …` works without the `task` prefix.
+        apps.task-window = mkTaskAlias "window" "Launch/attach the two-side human/machine TUI workspace on a project.";
+        apps.task-orchestrate = mkTaskAlias "orchestrate" "Run an agent task and open a review (PR) via the configured forge adapter.";
+        apps.task-review = mkTaskAlias "review" "Serve a project's per-task HTML reports over HTTP (localhost by default).";
+        # Dev-time forge (moves to your-config-repo in G2/ADR-0018 — VM/deploy config).
         apps.forgejo-local = {
           type = "app";
           program = "${pkgs.writeShellApplication {

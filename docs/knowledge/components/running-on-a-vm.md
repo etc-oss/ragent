@@ -50,7 +50,7 @@ ssh you@your-vm
 git clone <ragent> && cd ragent
 nix develop .#workspace           # zellij, nvim(+LSP), lazygit, git-surgeon, agents
 export ANTHROPIC_API_KEY=...       # forwarded into the jail at runtime (ADR-0014)
-./tools/ragent-workspace.sh "$PWD" mytask   # or: nix run .#workspace -- "$PWD" mytask
+./tools/ragent-workspace.sh "$PWD" mytask   # or: nix run .#task-window -- "$PWD" mytask
 ```
 
 No Lima, no host-home mount. The jail confines the agent to its clone *inside the
@@ -105,7 +105,7 @@ keep Lima (C), scope the mount to the project directory.
 ## What already ports directly
 
 Everything ragent-specific is host-agnostic: the `flake.nix` (jail, agents,
-`sharedTools`, the `workspace` devshell and `nix run .#workspace`), the
+`sharedTools`, the `workspace` devshell and `nix run .#task-window`), the
 `tools/`, the KDL layout, and the provisioning steps in `lima/ragent.yaml`. The
 only macOS-coupled piece is Lima itself — which options A and B drop.
 

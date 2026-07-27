@@ -102,7 +102,7 @@ limactl shell ragent
 # 2) inside the guest, on a git project (this repo works):
 cd /path/to/ragent
 nix develop .#workspace                       # zellij, nvim(+LSP), lazygit, git-surgeon, rg, fd, jq, agents
-./tools/ragent-workspace.sh "$PWD" mytask     # or, checkout-free: nix run .#workspace -- "$PWD" mytask
+ragent task window "$PWD" mytask              # or, checkout-free: nix run .#task-window -- "$PWD" mytask
 ```
 
 Then sanity-check at the terminal (the interactive parts that can't be verified
@@ -125,11 +125,11 @@ headless):
   now forces `xterm-256color`, but use a truecolor terminal (iTerm2 / kitty /
   WezTerm). Manage sessions independently of a launch:
   ```sh
-  nix run .#zellij -- list-sessions
-  nix run .#zellij -- attach ragent-mytask          # re-attach after Ctrl+o d
-  nix run .#zellij -- kill-session ragent-mytask     # or delete-all-sessions --yes
+  nix run . -- task list                             # list sessions
+  nix run . -- task attach mytask                    # re-attach after Ctrl+o d (resolves ragent-mytask)
+  nix run . -- task kill mytask                      # or: zellij delete-all-sessions --yes
   ```
-  Re-running `ragent-workspace.sh` on the same task now **attaches** to an
+  Re-running `ragent task window` on the same task now **attaches** to an
   existing session instead of erroring.
 
 ## Forking ragent into another project
@@ -143,7 +143,7 @@ cd my-project                      # a git repo
 nix flake init -t <ragent>#default # drops a small flake.nix consuming ragent
 echo "use flake" > .envrc && direnv allow   # optional: auto-load the env
 nix develop                        # zellij, nvim, lazygit, git-surgeon, agents
-nix run .#workspace -- "$PWD" mytask
+nix run .#task-window -- "$PWD" mytask
 ```
 
 - **Your project's tools go in `projectTools`** in the generated `flake.nix`
@@ -153,7 +153,7 @@ nix run .#workspace -- "$PWD" mytask
   in-jail). Dependencies live in `flake.lock`, updated with `nix flake update` —
   *not* in a Makefile.
 - **A Makefile is fine only as a thin task-runner** that delegates to nix
-  (`make review` → `nix run .#workspace`); never as the dependency manager.
+  (`make review` → `nix run .#task-window`); never as the dependency manager.
 - **Want personal defaults** (a default agent, extra tools, an IDE nvim, a theme)?
   Consume a personal config repo like
   [your-config-repo](docs/knowledge/decisions/0018-split-your-config-repo.md)

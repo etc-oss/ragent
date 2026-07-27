@@ -12,7 +12,7 @@ shell:           ## Enter the workspace devshell (tools on PATH)
 	nix develop
 
 workspace:       ## Launch the two-side HUMAN/MACHINE workspace on this project
-	nix run .#workspace -- "$$PWD" $(or $(task),task)
+	nix run .#task-window -- "$$PWD" $(or $(task),task)
 
 review:          ## Show the current agent branch's proposed diff (agent/<task>)
 	@git -C "$$PWD-agent-$(or $(task),task)" log --oneline -1 2>/dev/null \
