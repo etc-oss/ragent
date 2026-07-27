@@ -47,10 +47,15 @@ the same loop works over Forgejo, GitLab, GitHub (Enterprise), or bare git-over-
 | `open-review <branch> <base>` | open/update the review unit (PR / MR / …); return id |
 | `status <review>` | `pending` \| `changes-requested` \| `approved` |
 | `comments <review>` | unresolved review comments (fed back to the agent) |
+| `report <review> <text>` | post the agent's reply/report into the thread (you see it on your phone) |
 | `merge <review>` | merge (only when `autoMerge` and approved) |
 
 Adapters: `forgejo` (default), `gitlab`, `github`, `ssh`. Each is a small script/
-module host-side; "PR", "MR", and "review" all map to these verbs.
+module host-side; "PR", "MR", and "review" all map to these verbs. **The verb set
+is provisional** — 6a (the first real adapter) is expected to reshape it.
+**Self-hosted adapters (Forgejo, GitLab-CE, SSH) stay in-guest on the mesh; SaaS
+(github.com/gitlab.com) sends the review to a third party** — a conscious
+per-project relaxation of confinement, not a default.
 
 ## Components & where they live (ADR-0018 split)
 

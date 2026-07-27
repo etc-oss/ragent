@@ -37,11 +37,25 @@ implement it for each backend.
 | `open-review <branch> <base>` | Open or update the review unit (PR / MR / …); return its id/URL. |
 | `status <review>` | `pending` \| `changes-requested` \| `approved`. |
 | `comments <review>` | Unresolved review comments (fed back to the agent). |
+| `report <review> <text>` | Post the agent's reply/report back into the thread ("addressed X by …") — so you see its response on your phone. |
 | `merge <review>` | Merge (only when `autoMerge` and approved). |
+
+> **The interface is provisional.** The *decision* to use adapters is accepted; this
+> exact verb set is a hypothesis written before any adapter runs. 6a (the first
+> Forgejo adapter, pushing one real PR) is expected to reshape it — that is not an
+> amendment to this ADR, it is the interface earning its shape.
 
 **Adapters (initial):** `forgejo` (default, self-hosted), `gitlab`, `github`
 (Enterprise or SaaS), and `ssh` (bare git over SSH + patch/notes — the minimal,
 forge-less transport). "PR", "MR", and "review" all map to the same interface.
+
+**Privacy boundary — self-hosted vs. SaaS.** Self-hosted adapters (Forgejo,
+GitLab-CE, a git-over-SSH remote) run **in the guest, on the Tailscale mesh** — your
+code and the whole review stay inside your private boundary. **SaaS adapters
+(github.com, gitlab.com) are external**: the agent's branch and the review leave to
+a third party. That is a real relaxation of confinement (principle #1); the SaaS
+adapters exist for teams already committed to those hosts, and the exposure must be
+a conscious per-project choice, not a default.
 
 **Per-project configuration** (in the project's `flake.nix`, alongside
 `projectTools`; secrets are runtime-forwarded, never in the flake — ADR-0014):
