@@ -54,6 +54,17 @@ and the substrate a forge `report` verb can later post.
 
 ## Beyond — future guidelines (direction, not commitments)
 
+- **Per-agent config (`agentConfig`)** — a per-project knob to opt each agent into
+  its *native* strengths without breaking the portable core: e.g. "in this repo,
+  Claude Code uses the OpenSpec skill / an MCP server; pi uses a prompt convention".
+  The lowest-common-denominator (CLIs on PATH + `AGENTS.md`) stays the guaranteed
+  floor; `agentConfig` layers native skills / MCP / bound config on top per agent
+  (`mkWorkspace { agentConfig = { jailed-claude-code = { skills=…; extraBind=…; }; }; }`),
+  so a capable agent runs at full strength while the orchestrator stays
+  agent-agnostic (ADR-0007). Deferred — flagged for design later.
+- **Adapters in a real language** — rewrite the transport adapters from `sh` to
+  Python (or Go), using the forge SDKs; the transport-agnostic verb boundary makes
+  this a contained, per-adapter change.
 - **More adapters** as needed — the `ssh` (forge-less) adapter for minimal setups;
   hardening the GitLab/GitHub Enterprise ones for teams.
 - **Stronger isolation** — graduate from bubblewrap to **microvm.nix** for a
