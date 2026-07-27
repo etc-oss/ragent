@@ -18,10 +18,10 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # The layout is set by the devshell/app to the flake-GENERATED (PATH-substituted)
 # store layout. The raw workspace/ragent-workspace.kdl is a @bash@/@paneBin@
 # TEMPLATE and must not be used un-substituted. RAGENT_LAYOUT is REQUIRED to launch
-# the TUI, but not to do clone/boundary setup (RAGENT_NO_LAUNCH) — so it is checked
+# the TUI, but not to do clone/boundary setup (RAGENT_SETUP_ONLY) — so it is checked
 # just before the Zellij launch, below, not here.
 LAYOUT="${RAGENT_LAYOUT:-}"
-RAGENT_RUN="${RAGENT_RUN_BIN:-$REPO/tools/ragent-run.sh}"
+RAGENT_RUN="${RAGENT_RUN_BIN:-$REPO/tools/ragent-confine.sh}"
 # Host-side task-report generator (agent's explanation + diff → served HTML).
 RAGENT_REPORT="${RAGENT_REPORT_BIN:-$REPO/tools/ragent-report.py}"
 # Neon/pastel theming (Tokyo Night, greens neutralized): Zellij via --config,
@@ -34,7 +34,6 @@ TASK="${2:-task}"
 BRANCH="agent/$TASK"
 CLONE="${RAGENT_CLONE_DIR:-${MAIN%/}-agent-$TASK}"
 
-command -v zellij >/dev/null || { echo "zellij not on PATH — run inside 'nix develop .#workspace'" >&2; exit 1; }
 git -C "$MAIN" rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "$MAIN is not a git repo" >&2; exit 1; }
 BASE="$(git -C "$MAIN" branch --show-current 2>/dev/null || echo HEAD)"
 
@@ -55,7 +54,7 @@ mkdir -p "$CLONE/.ragent"
 grep -qxF ".ragent/" "$CLONE/.git/info/exclude" 2>/dev/null || echo ".ragent/" >> "$CLONE/.git/info/exclude"
 LOG="$CLONE/.ragent/agent.log"; : > "$LOG"
 
-cat > "$CLONE/.ragent/launch-agent.sh" <<EOF
+cat > "$CLONE/.ragent/spawn-agent.sh" <<EOF
 #!/usr/bin/env bash
 # Launch the confined agent in this clone (cgroup-capped + logged). Set your key
 # first, e.g.  export ANTHROPIC_API_KEY=...   (ADR-0014 covers the credential bind).
@@ -78,14 +77,14 @@ if command -v python3 >/dev/null 2>&1; then
     && echo "task report → $CLONE/.ragent/reports/html/$TASK.html   (serve: nix run .#serve -- $CLONE)"
 fi
 EOF
-chmod +x "$CLONE/.ragent/launch-agent.sh"
+chmod +x "$CLONE/.ragent/spawn-agent.sh"
 
 cat > "$CLONE/.ragent/README" <<EOF
 AGENT clone — branch $BRANCH — confined via jail.nix (ADR-0016).
 
 Launch the agent here (confined + cgroup-capped; logs to .ragent/agent.log):
-    ./.ragent/launch-agent.sh                              # opencode (default)
-    RAGENT_AGENT=jailed-claude-code ./.ragent/launch-agent.sh
+    ./.ragent/spawn-agent.sh                              # opencode (default)
+    RAGENT_AGENT=jailed-claude-code ./.ragent/spawn-agent.sh
 
 A task report (the agent's .ragent/EXPLAIN.md + the diff, as HTML) is generated
 automatically after each run. Review it from any device:
@@ -104,12 +103,16 @@ export RAGENT_MAIN="$MAIN" RAGENT_CLONE="$CLONE" RAGENT_LOG="$LOG"
 echo "human tree : $MAIN ($BASE)"
 echo "agent clone: $CLONE ($BRANCH)"
 
-# Testability hook: set RAGENT_NO_LAUNCH=1 to do the clone/boundary setup without
+# Testability hook: set RAGENT_SETUP_ONLY=1 to do the clone/boundary setup without
 # starting the TUI (used by the boundary test; a TUI can't be driven headlessly).
-if [ -n "${RAGENT_NO_LAUNCH:-}" ]; then
-  echo "(RAGENT_NO_LAUNCH set — clone + workspace metadata ready; skipping Zellij)"
+if [ -n "${RAGENT_SETUP_ONLY:-}" ]; then
+  echo "(RAGENT_SETUP_ONLY set — clone + workspace metadata ready; skipping Zellij)"
   exit 0
 fi
+
+# The TUI needs zellij on PATH (the setup-only path above does not — the
+# orchestrator reuses this script only for clone/boundary setup).
+command -v zellij >/dev/null || { echo "zellij not on PATH — run inside 'nix develop .#workspace'" >&2; exit 1; }
 
 # A layout is required to launch the TUI (but not for the setup-only path above).
 : "${LAYOUT:?run via 'nix develop .#workspace' or 'nix run .#workspace' (RAGENT_LAYOUT unset)}"

@@ -214,7 +214,7 @@
               runtimeInputs = wsTools ++ agents.list;
               text = ''
                 export RAGENT_LAYOUT="''${RAGENT_LAYOUT:-${layout}}"
-                export RAGENT_RUN_BIN="''${RAGENT_RUN_BIN:-${toolsDir}/ragent-run.sh}"
+                export RAGENT_RUN_BIN="''${RAGENT_RUN_BIN:-${toolsDir}/ragent-confine.sh}"
                 export RAGENT_REPORT_BIN="''${RAGENT_REPORT_BIN:-${toolsDir}/ragent-report.py}"
                 export RAGENT_ZELLIJ_CONFIG="''${RAGENT_ZELLIJ_CONFIG:-${./workspace/zellij-config.kdl}}"
                 export RAGENT_LAZYGIT_CONFIG="''${RAGENT_LAZYGIT_CONFIG:-${./workspace/lazygit-theme.yml}}"

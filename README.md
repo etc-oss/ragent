@@ -112,7 +112,7 @@ headless):
   confirm an LSP attaches (`gd` = go-to-def, `K` = hover). The lazygit pane shows
   the repo.
 - **MACHINE tab** — a shell in the agent **clone** (`…-agent-mytask`). Export a
-  provider key (e.g. `ANTHROPIC_API_KEY`), run `./.ragent/launch-agent.sh`, and
+  provider key (e.g. `ANTHROPIC_API_KEY`), run `./.ragent/spawn-agent.sh`, and
   watch the log pane fill. The agent can only touch the clone.
 - **Review** — from the HUMAN side: `git fetch <clone> agent/mytask` then
   `git diff <default>..FETCH_HEAD`; `git merge FETCH_HEAD` to accept, or ignore to

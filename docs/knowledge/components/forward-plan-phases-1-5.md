@@ -52,7 +52,7 @@ and the crush/opencode/pi jails), the `jail.nix` combinator set, and
 - `flake.nix` wires `jailed-agents` + a jail.nix `jailed-probe` (the confinement
   proof), `jailed-opencode`, and `jailed-claude-code`, Linux-guarded; `flake.lock`
   updated.
-- `tools/confinement-test.sh` (negative-control gate), `tools/ragent-run.sh`
+- `tools/confinement-test.sh` (negative-control gate), `tools/ragent-confine.sh`
   (cgroup launcher), and the Lima guest config (now in your-config-repo) with user
   namespaces + cgroup delegation.
 - **Verified on macOS (smoke test):** the darwin devshell and the `aarch64-linux`
@@ -70,7 +70,7 @@ and the crush/opencode/pi jails), the `jail.nix` combinator set, and
   `$HOME` is a fresh empty tmpfs.
 - **cgroup caps enforce** (ADR-0015): controllers `cpu/memory/pids` are delegated
   to the user session, and a `MemoryMax=50M` `systemd-run --user --scope`
-  OOM-killed an unbounded allocation instantly (not a timeout). `ragent-run.sh`'s
+  OOM-killed an unbounded allocation instantly (not a timeout). `ragent-confine.sh`'s
   mechanism bites.
 - **DNS works** inside the jail: `/etc/resolv.conf` is present and the shared net
   namespace resolves and connects — a TCP connect to the LLM API host from inside
@@ -79,7 +79,7 @@ and the crush/opencode/pi jails), the `jail.nix` combinator set, and
 - **A real agent builds and launches in its jail:** `jailed-opencode` builds
   (bun2nix; opencode 1.18.5, wrapping the prebuilt linux-arm64 binary,
   `bubblewrap` in the closure) and runs — `opencode --version` → `1.18.5`, rc 0,
-  including under `tools/ragent-run.sh` (cgroup scope + jail together, so the caps
+  including under `tools/ragent-confine.sh` (cgroup scope + jail together, so the caps
   *integration* is confirmed, not just the mechanism).
 - **opencode's confinement — established by bind-list inspection** (not by
   re-running the 8 controls against its profile): its bwrap invocation makes only
@@ -89,7 +89,7 @@ and the crush/opencode/pi jails), the `jail.nix` combinator set, and
   user/ipc/pid/uts/cgroup unshared and net shared for egress. So opencode is
   confined by construction to the project dir + its own state dirs.
 - **Operational + secret notes:** the bound XDG dirs must pre-exist or bwrap
-  aborts ("Can't find source path") — `ragent-run.sh` now pre-creates them via
+  aborts ("Can't find source path") — `ragent-confine.sh` now pre-creates them via
   `RAGENT_PRECREATE_DIRS`. And `~/.local/share/opencode` is bound **read-write**,
   where opencode persists auth — the exact credential-dir case
   [ADR-0014](../decisions/0014-runtime-env-secret-forwarding.md) flags: when
@@ -98,7 +98,7 @@ and the crush/opencode/pi jails), the `jail.nix` combinator set, and
 - **Dogfood — Claude Code in its own jail (the recursive milestone):**
   `jailed-claude-code` builds (claude-code 2.1.220, unfree; `socat`/`bubblewrap`
   in the closure) and runs confined — `--version` → `2.1.220`, rc 0, both directly
-  and via `ragent-run.sh`. Bind list inspected: only `$PWD`, `~/.claude` (dir),
+  and via `ragent-confine.sh`. Bind list inspected: only `$PWD`, `~/.claude` (dir),
   and `~/.claude.json` (file) are real+writable; `~`/`/tmp` tmpfs, all else
   `--ro-bind`. `~/.claude.json` holds Claude Code's credentials and is bound
   **read-write** — the ADR-0014 tension in its sharpest form. Launcher note:
@@ -172,7 +172,7 @@ inside an SSH'd Lima session.
 - `tools/ragent-workspace.sh` — sets up the agent **clone** (ADR-0016), writes a
   per-clone launch helper + log, and starts Zellij with `--new-session-with-layout`
   (caught + fixed a real bug: plain `--session … --layout` adds tabs to an
-  *existing* session). The generated `.ragent/launch-agent.sh` is verified end to
+  *existing* session). The generated `.ragent/spawn-agent.sh` is verified end to
   end: `--version` runs opencode 1.18.5 confined + capped and its output reaches
   `.ragent/agent.log`, so the MACHINE log pane will populate.
 - **Review boundary verified headlessly** (ADR-0011/0016): the agent commits
@@ -182,7 +182,7 @@ inside an SSH'd Lima session.
 
 **Remaining / honest caveats:**
 - The launcher's **pieces** are verified (the `-s NAME -n LAYOUT` invocation via
-  `dump-layout`; clone/env/metadata via the headless hook; `launch-agent.sh` via
+  `dump-layout`; clone/env/metadata via the headless hook; `spawn-agent.sh` via
   `--version`), but the launcher → **live-TUI composition** was not run end to end
   headlessly — that final hop is human-verified-later.
 - **Interactive usability not verified headless** — truecolor, clipboard
@@ -345,7 +345,7 @@ core loop warrants it — explicitly resisted.
 1. `README` polish; a worked **example project** demonstrating the full loop.
 2. CI: `nix flake check`; regenerate and verify `docs/html/` is in sync with
    `docs/knowledge/`. **Wire the in-guest scripts into `flake check`s** rather
-   than leaving them hand-run — `confinement-test.sh`, `ragent-run.sh`'s cap
+   than leaving them hand-run — `confinement-test.sh`, `ragent-confine.sh`'s cap
    check, the workspace layout/boundary tests, and `okf_render.py` were all
    verified by hand this far and are regression surface; make them checks (Linux
    checks for the jail/workspace, a host check for the renderer).

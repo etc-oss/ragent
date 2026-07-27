@@ -35,7 +35,7 @@ and works with no forge at all.
   `okf_render`'s Markdown renderer + CSS (the whole `tools/` dir is one store path
   so the import resolves), and renders the diff with its own neon add/del colouring.
 - **Host-side + automatic:** report generation runs *outside* the jail (same side as
-  a forge push), invoked by the clone's `launch-agent.sh` after the agent finishes.
+  a forge push), invoked by the clone's `spawn-agent.sh` after the agent finishes.
 - **Serve = a security seam:** `nix run .#serve -- <dir>` binds `127.0.0.1` by
   default (python `http.server` is unauthenticated); a private **Tailscale** address
   is opt-in (`RAGENT_SERVE_HOST`). This is **weaker than the forge's token-gated

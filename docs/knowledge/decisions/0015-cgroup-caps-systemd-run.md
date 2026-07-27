@@ -27,7 +27,7 @@ Wrap the jailed agent in a **transient systemd scope** with caps:
 systemd-run --user --scope -p MemoryMax=4G -p CPUQuota=200% -p TasksMax=512 -- <jailed-agent>
 ```
 
-Implemented in `tools/ragent-run.sh` (caps overridable via env). The guest enables
+Implemented in `tools/ragent-confine.sh` (caps overridable via env). The guest enables
 **user cgroup delegation** (a `Delegate=cpu cpuset io memory pids` drop-in in the
 VM config — now in your-config-repo's `lima/ragent.yaml`) so `--user` scopes can
 actually enforce the limits.
@@ -57,4 +57,4 @@ actually enforce the limits.
 - [Genesis session](../sessions/0001-genesis-architecture-conversation.md)
 - [ADR-0002 — jail.nix for confinement](0002-jail-nix-confinement.md)
 - [ADR-0013 — Build the jail on jailed-agents](0013-jailed-agents-opencode-first.md)
-- `tools/ragent-run.sh`; the VM config now lives in your-config-repo (ADR-0018)
+- `tools/ragent-confine.sh`; the VM config now lives in your-config-repo (ADR-0018)

@@ -66,7 +66,7 @@ per-project relaxation of confinement, not a default.
 - **The orchestrator + adapters** → **ragent** (the reusable framework), exposed
   like the workspace: a `lib.<system>.mkOrchestrator` / `apps.orchestrate` a project
   invokes. Reuses the clone/boundary logic in `tools/ragent-workspace.sh` and the
-  confined-agent launch in `tools/ragent-run.sh` + `.ragent/launch-agent.sh`.
+  confined-agent launch in `tools/ragent-confine.sh` + `.ragent/spawn-agent.sh`.
 - **Per project** → its `reviewConfig` in the project flake (adapter, remote,
   `autoMerge`, `pollInterval`, bounds — ADR-0020), plus its repo on the forge. The
   forge token is runtime-forwarded (like the API key, ADR-0014), never in the repo.

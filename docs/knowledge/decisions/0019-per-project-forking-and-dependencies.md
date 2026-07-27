@@ -38,7 +38,7 @@ do not fork ragent, and do not manage dependencies with a Makefile.**
 
 **A per-project `Makefile` is acceptable only as a thin task-runner** — human-
 friendly aliases that *delegate to nix* (e.g. `make review` → `nix run .#workspace`,
-`make agent` → `.ragent/launch-agent.sh`). It must never be the dependency
+`make agent` → `.ragent/spawn-agent.sh`). It must never be the dependency
 mechanism (no `apt install`, no `go get`, no version pinning in `make`); that is
 `flake.lock`'s job.
 

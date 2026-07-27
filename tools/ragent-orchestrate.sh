@@ -31,16 +31,16 @@ export RAGENT_FORGE_REPO="${RAGENT_FORGE_REPO:-${RAGENT_FORGE_USER:-ci}/$(basena
 echo "▶ orchestrate: task '$TASK' on $PROJECT ($BASE) via $ADAPTER → $RAGENT_FORGE_REPO"
 
 # 1. Set up the agent clone + launch helper (reuse the workspace boundary logic).
-RAGENT_NO_LAUNCH=1 RAGENT_AGENT="$AGENT" bash "$REPO/tools/ragent-workspace.sh" "$PROJECT" "$TASK" >/dev/null
+RAGENT_SETUP_ONLY=1 RAGENT_AGENT="$AGENT" bash "$REPO/tools/ragent-workspace.sh" "$PROJECT" "$TASK" >/dev/null
 
 # 2. Run the confined agent. It commits in the clone, writes .ragent/EXPLAIN.md,
-#    and launch-agent.sh auto-generates the HTML report (ADR-0021).
+#    and spawn-agent.sh auto-generates the HTML report (ADR-0021).
 FULL_PROMPT="$PROMPT
 
 When finished: write a brief .ragent/EXPLAIN.md (2-3 sentences on what you changed
 and why), then stage and commit all changes with a clear message."
 echo "▶ running $AGENT (confined) …"
-( cd "$CLONE" && RAGENT_AGENT="$AGENT" ./.ragent/launch-agent.sh -p "$FULL_PROMPT" --dangerously-skip-permissions ) \
+( cd "$CLONE" && RAGENT_AGENT="$AGENT" ./.ragent/spawn-agent.sh -p "$FULL_PROMPT" --dangerously-skip-permissions ) \
   2>&1 | sed 's/^/  agent: /' | tail -6
 
 # 3. Push the branch and open the review via the adapter (outside the jail).
