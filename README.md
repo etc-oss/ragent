@@ -18,10 +18,9 @@ ADR in an [OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog) knowle
 > with a git-clone review boundary, the shared tooling layer, **and the async review
 > loop** (a real sandboxed agent opens a real PR; a bounded, human-paced loop takes your
 > review notes → revise → approve → merge). Claude Code can
-> authenticate by API key **or** Pro/Max subscription. **Local-only — nothing is
-> published;** publishing is a deliberate, human-gated step. Every claim here is
-> backed by a real run in the guest, and the honest edges are stated inline and in
-> [`SECURITY.md`](SECURITY.md).
+> authenticate by API key **or** Pro/Max subscription. This is the **v0.1.0** first
+> public release; every claim here is backed by a real run in the guest, and the
+> honest edges are stated inline and in [`SECURITY.md`](SECURITY.md).
 
 ## What you get
 
@@ -184,7 +183,7 @@ as a **pinned flake input** — reproducible deps, a one-line bump
 
 ```sh
 cd my-project                      # a git repo
-nix flake init -t <ragent>#default # a small flake.nix that consumes ragent
+nix flake init -t github:etc-oss/ragent#default # a small flake.nix that consumes ragent
 nix develop && nix run .#task-window -- "$PWD" mytask
 ```
 
@@ -243,7 +242,11 @@ project's real changelog of *thinking*. (The referenced upstreams — `jail.nix`
 ## License & attribution
 
 ragent's own code is [Apache-2.0](LICENSE)
-([ADR-0001](docs/knowledge/decisions/0001-apache-2.0-license.md)). It **references**
+([ADR-0001](docs/knowledge/decisions/0001-apache-2.0-license.md)), with a **CC0
+public-domain fallback**: because much of ragent was AI-authored (see **Provenance**
+above), any portion not eligible for copyright is dedicated to the public domain
+([CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)); where copyright does
+subsist, Apache-2.0 governs (details in [`NOTICE`](NOTICE)). It **references**
 upstreams as pinned flake inputs and does **not** vendor their code — each keeps its
 own license. In particular **`jail.nix` is GPL-3.0**: referencing it as a build input
 (not distributing its source) is exactly what keeps this repo's Apache-2.0 umbrella

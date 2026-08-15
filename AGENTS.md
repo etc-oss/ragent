@@ -28,18 +28,17 @@ and [the forward plan](docs/knowledge/components/forward-plan-phases-1-5.md).
 
 ## Project status
 
-- **Phase 0 (scaffold + governance): done.**
-- **Phase 1 (the sandbox, one agent): confinement core done.** Verified in a Lima
-  guest — probe 8/8, cgroup caps enforce, DNS works, and both opencode and Claude
-  Code build and run confined. A full agent-driven *edit* needs a provider key
-  (ADR-0014). See ADRs 0013–0015.
-- **Phase 2 (the Zellij workspace): in progress.** The `workspace` devshell and
-  KDL layout load in-guest, and the clone review boundary (ADR-0016) is verified;
-  interactive terminal usability (colors/clipboard/keys) is human-verified-later.
-  See ADRs 0005, 0011, 0016.
+**Phases 0–6 built and verified locally** (macOS host + a Lima Linux guest): the
+confinement gate (probe 8/8, cgroup caps), the four sandboxed agents, the two-side
+workspace + git-clone review boundary, the shared tooling layer, and the async review
+loop (adapter + orchestrator + bounded, human-paced revise→merge loop). Claude Code
+runs on an API key **or** a Pro/Max subscription (with a usage-limit wait layer). See
+the [roadmap](docs/knowledge/components/roadmap.md) for what's next (6c: remote
+Tailscale forge, notifications, more adapters, microvm.nix, opt-in OTel) and the
+[CHANGELOG](CHANGELOG.md) for per-release detail.
 
-The build is intentionally a vertical slice: scaffold and plan now, implement
-incrementally afterward. Do not try to build everything at once.
+The build is a vertical slice recorded as it goes: every non-trivial decision becomes
+an ADR linked to the session that produced it — that trail *is* the design history.
 
 ## The knowledge bundle — read and maintain it
 

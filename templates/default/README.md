@@ -1,6 +1,6 @@
 # <your project>
 
-Scaffolded from the [ragent](https://github.com/REPLACE-ME/ragent) per-project
+Scaffolded from the [ragent](https://github.com/etc-oss/ragent) per-project
 template. ragent is an open-source, forkable AI-coding workspace: confined agents
 (jail.nix) with human oversight, on Zellij + Lima.
 
@@ -31,7 +31,7 @@ nix run .#task-window -- .    # launch the two-side workspace on this project
 
 There's also a thin **`Makefile`** — `make workspace`, `make review`, `make test` —
 purely ergonomic aliases that delegate to `nix`. It is **not** a dependency
-manager (see [ADR-0019](https://github.com/REPLACE-ME/ragent/blob/main/docs/knowledge/decisions/0019-per-project-forking-and-dependencies.md));
+manager (see [ADR-0019](https://github.com/etc-oss/ragent/blob/main/docs/knowledge/decisions/0019-per-project-forking-and-dependencies.md));
 deleting it changes nothing about what's installed.
 
 The MACHINE side runs a coding agent confined to a **clone** of this project

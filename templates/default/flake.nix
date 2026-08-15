@@ -7,7 +7,7 @@
     # ragent is CONSUMED as a pinned flake input — never forked (ADR-0003).
     # Until ragent (or your fork) is published, point this at a local checkout:
     #     ragent.url = "git+file:///absolute/path/to/ragent";
-    ragent.url = "github:REPLACE-ME/ragent";
+    ragent.url = "github:etc-oss/ragent";
   };
 
   outputs = { self, nixpkgs, ragent, ... }:

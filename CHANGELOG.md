@@ -1,10 +1,13 @@
 # Changelog
 
-All notable changes to ragent. **Pre-release — nothing has been published;** the
-repository is local-only. Everything below was verified locally (macOS host + a
-Lima Linux guest) and is **not yet wired into CI**.
+All notable changes to ragent. Everything below was verified locally (macOS host + a
+Lima Linux guest); CI (`.github/workflows/ci.yml`) runs the flake build, the
+confinement gate, and the Python test suites on push.
 
-## Unreleased — Phase 6 + subscription auth (2026-07 → 2026-08)
+## v0.1.0 — 2026-08-15 — first public release
+
+Phases 0–6, built and verified locally (macOS host + a Lima Linux guest). Highlights
+below; the ADRs in `docs/knowledge/decisions/` carry the full reasoning.
 
 ### Phase 6 — async review (agent → PR → bounded human-paced loop → merge)
 - Pluggable review-transport **adapter** (ADR-0020); transport-agnostic orchestrator,
@@ -40,7 +43,7 @@ Lima Linux guest) and is **not yet wired into CI**.
   now runs the Python test suites (adapter / 6b loop / rate-limit) alongside the jail
   build.
 
-## Unreleased — Phases 0–5 (2026-07-26)
+## Phases 0–5 — foundation (2026-07-26)
 
 ### Phase 0 — scaffold + governance
 - Apache-2.0 (ADR-0001); `NOTICE` + `THIRD_PARTY.md` with verified upstream

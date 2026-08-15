@@ -9,6 +9,13 @@ session records and ADRs under docs/knowledge/ are the transparent decision trai
 The third-party works below are referenced — not authored here — each under its own
 license.
 
+Public-domain fallback (CC0): to the extent any portion of ragent's own code or
+documentation is not eligible for copyright (e.g. AI-authored material lacking
+sufficient human authorship), that portion is dedicated to the public domain under
+CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Where copyright does
+subsist, ragent's own files are licensed Apache-2.0 (see LICENSE) — a deliberate dual
+track given the provenance above. (This is not legal advice.)
+
 ------------------------------------------------------------------------------
 Third-party works
 ------------------------------------------------------------------------------

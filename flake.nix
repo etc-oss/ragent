@@ -285,7 +285,7 @@
     ))
     // {
       # A per-project template that consumes ragent as a pinned flake input
-      # (ADR-0003 / ADR-0007). Scaffold with:  nix flake init -t <ragent>#default
+      # (ADR-0003 / ADR-0007). Scaffold with:  nix flake init -t github:etc-oss/ragent#default
       templates.default = {
         path = ./templates/default;
         description = "A per-project ragent workspace that consumes ragent as a flake input.";

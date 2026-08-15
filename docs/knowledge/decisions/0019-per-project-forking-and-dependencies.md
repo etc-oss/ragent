@@ -24,7 +24,7 @@ mechanism?
 do not fork ragent, and do not manage dependencies with a Makefile.**
 
 1. **Scaffold** a project workspace from the template (ADR-0007 / the `templates/`
-   dir): `nix flake init -t <ragent>#default`. That drops a small `flake.nix` with
+   dir): `nix flake init -t github:etc-oss/ragent#default`. That drops a small `flake.nix` with
    `inputs.ragent.url = …` and a `devShell`/`workspace` app composed from ragent.
 2. **Dependencies are pinned in `flake.lock`**, by content hash — reproducible,
    offline-capable (ADR-0010), and updated deliberately with `nix flake update`.

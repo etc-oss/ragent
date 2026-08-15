@@ -51,7 +51,7 @@ border-radius:8px;padding:.8rem 1rem}.card .t{font-weight:600}.card .d{color:var
 <ol><li><strong>Unprivileged user namespaces on</strong> (bubblewrap): <code>kernel.apparmor_restrict_unprivileged_userns=0</code> (Ubuntu 24.04) — persist in <code>/etc/sysctl.d/</code>.</li><li><strong>cgroup delegation</strong> (the caps, <a href="../decisions/0015-cgroup-caps-systemd-run.html">ADR-0015</a>): a <code>Delegate=cpu memory pids</code> drop-in for <code>user@.service</code>.</li><li><strong>Nix with flakes</strong> installed for your user.</li></ol>
 <p>Then:</p>
 <pre><code class="language-sh">ssh you@your-vm
-git clone &lt;ragent&gt; &amp;&amp; cd ragent
+git clone https://github.com/etc-oss/ragent &amp;&amp; cd ragent
 nix develop .#workspace           # zellij, nvim(+LSP), lazygit, git-surgeon, agents
 export ANTHROPIC_API_KEY=...       # forwarded into the jail at runtime (ADR-0014)
 ./tools/ragent-workspace.sh &quot;$PWD&quot; mytask   # or: nix run .#task-window -- &quot;$PWD&quot; mytask</code></pre>
