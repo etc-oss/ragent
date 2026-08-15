@@ -153,6 +153,17 @@ macOS / Windows host
 [orchestration & harness efficiency](docs/knowledge/components/orchestration-and-harness-efficiency.md):
 the model and its tools are untouched; four named trade-offs, each with its mitigation.
 
+**The review boundary — why a separate directory.** The agent never works in your project
+folder; it works in a sibling **clone** — `<project>-agent-<task>`, on branch
+`agent/<task>` — sandboxed to *that directory only*. Its edits can't reach your tree until
+you `git fetch` + `merge` them across, so the separate directory **is** the human gate, and
+a bad run is discarded by simply not merging. It's a full clone, **not a git worktree**, on
+purpose: a worktree keeps its `.git` object store *outside* the directory (so in-sandbox git
+would break), while a clone's `.git` is self-contained
+([ADR-0016](docs/knowledge/decisions/0016-agent-clone-not-worktree.md)). The clone is
+**reused** when you re-run the same task and is **not auto-deleted** — `rm -rf
+<project>-agent-<task>` to reclaim the space when you're done.
+
 ## Quickstart (Linux guest)
 
 The sandbox runs on Linux (bubblewrap needs namespaces); the VM config lives in

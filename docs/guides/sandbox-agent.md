@@ -26,16 +26,25 @@ ragent task window "$PWD" mytask
 ```
 
 - **HUMAN** pane: neovim + LSP + lazygit on your tree.
-- **MACHINE** pane: a shell in the agent **clone** (`…-agent-mytask`). Run the agent:
+- **MACHINE** pane: a shell in the agent **clone** (`…-agent-mytask`). Run the agent there —
+  **interactively** (a live Claude Code REPL, just confined to the clone — like the `claude`
+  session you're used to), or one-shot with `-p`:
   ```sh
+  # INTERACTIVE (omit -p): a normal Claude Code session, sandboxed to the clone
+  RAGENT_AGENT=jailed-claude-code-subscription ./.ragent/spawn-agent.sh
+  # one-shot / headless (this is what the async orchestrator uses):
   ./.ragent/spawn-agent.sh -p "add a subtract() to calc.py" --dangerously-skip-permissions
   ```
+  (Interactive still runs **confined + cgroup-capped** and logs to `.ragent/agent.log`; the
+  only difference from `orchestrate` is *you* drive it and review by hand.)
 - **Review** from the HUMAN side, then merge — nothing lands without this:
   ```sh
   git fetch "$PWD-agent-mytask" agent/mytask
   git diff  <base>..FETCH_HEAD     # what the agent proposes
-  git merge FETCH_HEAD             # accept — or do nothing to discard (the clone is disposable)
+  git merge FETCH_HEAD             # accept — or do nothing to discard (nothing lands)
   ```
+  The clone **persists** and is **reused** if you re-run `mytask`; it is not auto-deleted —
+  `rm -rf "$PWD-agent-mytask"` to reclaim the space when you're done.
 
 Session ops: `ragent task list | attach mytask | kill mytask`.
 
