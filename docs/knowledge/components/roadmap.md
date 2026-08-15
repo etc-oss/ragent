@@ -59,6 +59,13 @@ self-contained HTML report, served (`nix run .#task-review`, localhost/Tailscale
 is the forge-independent oversight channel — universal, reviewable from any device —
 and the substrate the forge `reply` verb posts back into the thread (6b).
 
+**Also shipped — an out-of-box local dev forge** ([ADR-0029](../decisions/0029-local-dev-forge.md)):
+`nix run .#dev-forge` stands up a localhost Forgejo (from nixpkgs) + writes `forge.env`, so
+the async loop runs without a personal config repo — **Nix, not docker-compose** (the guest
+has no Docker daemon; nixpkgs already ships forgejo). This refines the
+[ADR-0018](../decisions/0018-split-your-config-repo.md) boundary: the *deployed/remote* forge
+stays in your-config-repo; only the throwaway *dev* forge is framework DX.
+
 ## Beyond — future guidelines (direction, not commitments)
 
 - **Per-agent config (`agentConfig`)** — a per-project knob to opt each agent into

@@ -34,6 +34,9 @@ The runtime lives in **`tools/ragent/`** — an importable package
   self-contained HTML report (imports `okf_render` as a sibling). [ADR-0021]
 - **`ragent-serve.sh`** — serve the reports over HTTP (`127.0.0.1` default; Tailscale
   opt-in via `RAGENT_SERVE_HOST`).
+- **`ragent-dev-forge.py`** — stand up a local Forgejo (localhost, from nixpkgs) + write
+  `forge.env`, so the async review loop runs out of the box (`nix run .#dev-forge`;
+  foreground, Ctrl-C to stop). Nix, not docker-compose. [ADR-0029]
 - **`okf_render.py`** — the OKF knowledge bundle → offline HTML view + graph visualizer.
   Stdlib only; `docs/html/` is generated — never hand-edit it.
 

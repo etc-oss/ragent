@@ -60,6 +60,11 @@ overrides later).
   not depend on personal config; your-config-repo consumes ragent.
 
 ## Links
+- **Refined by [ADR-0029](0029-local-dev-forge.md)** — a first-class *dev* forge
+  (`nix run .#dev-forge`) ships in **ragent** for out-of-box async review; the
+  **deployed/remote** forge (NixOS `services.forgejo` on Tailscale) stays in
+  your-config-repo, per this split. (i.e. the split holds for the *deployed* forge; the
+  throwaway *dev* forge is framework DX.)
 - [ADR-0012 — Defer splitting out a consumable global-config repo](0012-defer-global-config-split.md) (realized by this)
 - [ADR-0003 — Consume upstreams as pinned flake inputs](0003-consume-upstreams-as-flake-inputs.md)
 - [Running ragent on a VM](../components/running-on-a-vm.md)

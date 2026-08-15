@@ -42,3 +42,4 @@ All were seeded from the [genesis conversation](../sessions/0001-genesis-archite
 | [0026](0026-subscription-usage-limit-wait.md) | Wait out a subscription usage limit instead of falling back to the API | accepted |
 | [0027](0027-knowledge-format-is-the-consumers-choice.md) | The knowledge/docs format is the consumer's choice — ragent doesn't impose OKF+ADR | accepted |
 | [0028](0028-runtime-python-package.md) | Promote the runtime Python into an importable `ragent` package | accepted |
+| [0029](0029-local-dev-forge.md) | A first-class local dev forge (Nix app), not docker-compose | accepted |

@@ -6,14 +6,16 @@ oversight on the go. Builds on [run a sandbox agent](sandbox-agent.md).
 ## Prerequisites
 
 - The [sandbox-agent](sandbox-agent.md) prerequisites (Linux guest + a credential).
-- A self-hosted **forge** and its transport env. For local dev, the your-config-repo
-  config ships a `forgejo-local` harness:
+- A **forge** and its transport env. **Out of the box**, ragent ships a local dev forge
+  ([ADR-0029](../knowledge/decisions/0029-local-dev-forge.md)):
   ```sh
-  nix run <your-config-repo>#forgejo-local      # starts Forgejo on 127.0.0.1 + writes forge.env
-  source ~/.config/ragent/forge.env             # RAGENT_ADAPTER + forge URL / user / token
+  nix run .#dev-forge                           # Forgejo on 127.0.0.1 + writes forge.env (foreground; Ctrl-C to stop)
+  source ~/.config/ragent/forge.env             # in ANOTHER shell — RAGENT_ADAPTER + forge URL / user / token
   ```
-  Remote is identical against a NixOS `services.forgejo` over **Tailscale** — a URL swap,
-  no code change.
+  Nix, **not** docker-compose (the guest has no Docker daemon; nixpkgs already ships
+  forgejo). For a persistent/**remote** forge, run a NixOS `services.forgejo` over
+  **Tailscale** (deployment config lives in your-config-repo) — the client side is
+  identical, just a `RAGENT_FORGE_URL` swap.
 
 ## Run a task → open a PR
 

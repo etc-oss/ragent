@@ -274,6 +274,18 @@
         apps.task-window = mkTaskAlias "window" "Launch/attach the two-side human/machine TUI workspace on a project.";
         apps.task-orchestrate = mkTaskAlias "orchestrate" "Run an agent task and open a review (PR) via the configured forge adapter.";
         apps.task-review = mkTaskAlias "review" "Serve a project's per-task HTML reports over HTTP (localhost by default).";
+        # An out-of-box LOCAL forge (Forgejo from nixpkgs, localhost) so the async review
+        # loop runs without standing one up yourself — writes forge.env, foreground
+        # (ADR-0029). Not a `ragent task` (it's infra, not an agent task); not Docker.
+        apps.dev-forge = {
+          type = "app";
+          program = "${pkgs.writeShellApplication {
+            name = "ragent-dev-forge";
+            runtimeInputs = [ pkgs.forgejo pkgs.git pkgs.python3 ];
+            text = ''exec python3 ${toolsDir}/ragent-dev-forge.py "$@"'';
+          }}/bin/ragent-dev-forge";
+          meta.description = "Stand up a local Forgejo (localhost) + write forge.env — try the async review loop out of the box.";
+        };
         # `nix flake check` builds these (the jail + the shared CLI). The
         # confinement negative-control RUNTIME test and docs-sync run in CI
         # (.github/workflows/ci.yml) — bubblewrap needs runtime namespaces a nix

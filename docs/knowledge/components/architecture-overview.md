@@ -87,6 +87,7 @@ ragent/
 │  ├─ ragent-confine.sh          #   run a jailed agent under cgroup caps (systemd scope)
 │  ├─ ragent-report.py           #   per-task HTML report — standalone; imports okf_render
 │  ├─ ragent-serve.sh            #   serve the reports over HTTP (localhost / Tailscale)
+│  ├─ ragent-dev-forge.py        #   out-of-box local Forgejo + forge.env (nix run .#dev-forge; ADR-0029)
 │  ├─ okf_render.py              #   knowledge bundle → offline HTML (stdlib only)
 │  └─ confinement-test.sh · mirror-example.sh   # the 8/8 confinement probe · offline-mirror template
 │
