@@ -33,6 +33,13 @@ if [ -n "${RAGENT_PRECREATE_DIRS:-}" ]; then
   mkdir -p $RAGENT_PRECREATE_DIRS
 fi
 
+# Load runtime secrets (provider key / Claude OAuth token) from the conventional 0600
+# file if present, so they're in the environment for the jail's fwd-env to forward
+# (ADR-0014) — no manual `export` each session. Secrets never enter the Nix store.
+if [ -f "$HOME/.config/ragent/env" ]; then
+  set -a; . "$HOME/.config/ragent/env"; set +a
+fi
+
 if command -v systemd-run >/dev/null 2>&1; then
   # NOTE (ADR-0015): --user scopes only enforce CPU/memory if the controllers are
   # delegated to the user session (a `Delegate=cpu memory pids` drop-in, or run as

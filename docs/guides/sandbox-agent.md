@@ -25,6 +25,9 @@ and the task name defaults to `work` — so most commands take no arguments.
   export CLAUDE_CODE_OAUTH_TOKEN=...                        # then a Pro/Max subscription
   export RAGENT_AGENT=jailed-claude-code-subscription
   ```
+  **Tip:** put those `export …` lines in **`~/.config/ragent/env`** (`chmod 600`) — ragent
+  auto-loads that file before every confined run, so the token/key is forwarded into the
+  sandbox without re-exporting each session (it never enters the Nix store; ADR-0014).
 - Pick any agent with `RAGENT_AGENT`: `jailed-opencode` (default), `jailed-claude-code`,
   `jailed-claude-code-subscription`, `jailed-pi`, `jailed-crush`.
 
