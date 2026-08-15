@@ -1,5 +1,5 @@
 {
-  description = "ragent — a forkable AI-coding workspace: confined agents (jail.nix) with human oversight, on Zellij + Lima.";
+  description = "ragent — a forkable AI-coding workspace: agents work boldly in a safe sandbox (jail.nix), with human oversight, on Zellij + Lima.";
 
   # ---------------------------------------------------------------------------
   # The docs devshell runs anywhere (incl. the macOS host). The jail and the
@@ -267,7 +267,7 @@
         apps.default = {
           type = "app";
           program = "${defaultWs.cli}/bin/ragent";
-          meta.description = "ragent — confined agents with human oversight (task window/orchestrate/review/list/attach/kill).";
+          meta.description = "ragent — sandboxed agents with human oversight (task window/orchestrate/review/list/attach/kill).";
         };
         # Thin aliases so `nix run .#task-<x> -- …` works without the `task` prefix.
         apps.task-window = mkTaskAlias "window" "Launch/attach the two-side human/machine TUI workspace on a project.";

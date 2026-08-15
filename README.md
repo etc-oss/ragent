@@ -1,20 +1,22 @@
 # ragent
 
-> Confined AI coding agents with real human oversight — a forkable-per-project workspace.
+> AI coding agents that work boldly in a safe sandbox — with real human oversight.
+> A forkable-per-project workspace.
 
-ragent runs coding agents (Claude Code, opencode, pi, crush) **confined** in a
-[`jail.nix`](https://git.sr.ht/~alexdavid/jail.nix)/bubblewrap sandbox inside a
-[Lima](https://github.com/lima-vm/lima) Linux VM, and keeps a **human in the loop**
-two ways: a two-pane terminal workspace for hands-on work, and an async review loop
-(the agent opens a PR, you review from your phone, it revises, you merge). It's
-consumed as a **pinned flake input** — add your project's tools and they run *in the
-jail* with the agent. Every decision is captured as an ADR in an
-[OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog) knowledge graph.
+ragent gives coding agents (Claude Code, opencode, pi, crush) a **safe sandbox** to
+work in — a [`jail.nix`](https://git.sr.ht/~alexdavid/jail.nix)/bubblewrap space
+inside a [Lima](https://github.com/lima-vm/lima) Linux VM where an agent can act and
+ideate *boldly, precisely because it can't reach anything outside its task* — and
+keeps a **human in the loop** two ways: a two-pane terminal workspace for hands-on
+work, and an async review loop (the agent opens a PR, you review from your phone, it
+revises, you merge). It's consumed as a **pinned flake input** — add your project's
+tools and they run *in the sandbox* with the agent. Every decision is captured as an
+ADR in an [OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog) knowledge graph.
 
 > **Status (2026-08): Phases 0–6 built and verified locally** (macOS host + a Lima
 > Linux guest) — the confinement gate, four confined agents, the two-side workspace
 > with a git-clone review boundary, the shared tooling layer, **and the async review
-> loop** (a real jailed agent opens a real PR; a bounded, human-paced loop takes your
+> loop** (a real sandboxed agent opens a real PR; a bounded, human-paced loop takes your
 > review notes → revise → approve → merge). Claude Code can
 > authenticate by API key **or** Pro/Max subscription. **Local-only — nothing is
 > published;** publishing is a deliberate, human-gated step. Every claim here is
@@ -23,11 +25,12 @@ jail* with the agent. Every decision is captured as an ADR in an
 
 ## What you get
 
-- **Confinement by construction.** The agent gets a read-write bind to the *project
-  directory only*; `$HOME`, SSH keys, the environment, and secrets are excluded, and
-  cgroup caps bound CPU/memory/PIDs. Verified by an **8/8 negative-control probe** —
-  the agent *cannot* reach what isn't bound
-  ([ADR-0002](docs/knowledge/decisions/0002-jail-nix-confinement.md),
+- **A safe sandbox, by construction.** The agent works freely in a read-write bind to
+  the *project directory only* — `$HOME`, SSH keys, the environment, and secrets sit
+  outside it, and cgroup caps bound CPU/memory/PIDs. It can act boldly precisely
+  because a mistake can't escape: verified by an **8/8 negative-control probe** (the
+  agent *cannot* reach what isn't bound —
+  [ADR-0002](docs/knowledge/decisions/0002-jail-nix-confinement.md),
   [ADR-0015](docs/knowledge/decisions/0015-cgroup-caps-systemd-run.md)).
 - **A hard human gate.** The agent commits only in a disposable clone; nothing
   reaches your tree without you fetching + merging (or approving a PR) —
@@ -48,8 +51,8 @@ jail* with the agent. Every decision is captured as an ADR in an
   report is the universal fallback
   ([ADR-0022](docs/knowledge/decisions/0022-python-adapters-verb-superset-capabilities.md),
   [ADR-0021](docs/knowledge/decisions/0021-per-task-explanatory-report.md)).
-- **Four agents, one interface.** opencode, Claude Code, pi, crush — all jailed
-  identically, with shared CLIs (git-surgeon, ripgrep, fd, jq) on the in-jail PATH
+- **Four agents, one interface.** opencode, Claude Code, pi, crush — all sandboxed
+  identically, with shared CLIs (git-surgeon, ripgrep, fd, jq) on the in-sandbox PATH
   ([ADR-0007](docs/knowledge/decisions/0007-shared-clis-on-path.md)). Claude Code
   authenticates by API key **or** Pro/Max **subscription** (browser `setup-token`);
   on the subscription path there's no API fallback — it **waits out** a usage limit
@@ -57,17 +60,19 @@ jail* with the agent. Every decision is captured as an ADR in an
   [ADR-0026](docs/knowledge/decisions/0026-subscription-usage-limit-wait.md)).
 - **Forkable per project.** Consume ragent as a pinned flake input; your
   `projectTools` join the confined agent's PATH so it can build and test your project
-  *itself, in-jail* (verified: a jailed agent runs `pytest` in-jail) —
+  *itself, in-sandbox* (verified: a sandboxed agent runs `pytest` in-sandbox) —
   [ADR-0019](docs/knowledge/decisions/0019-per-project-forking-and-dependencies.md).
 - **Its own memory.** Every non-trivial decision is an ADR linked to the verbatim
   session that produced it; `docs/knowledge/` is a cross-linked OKF graph.
 
 ## How it's airtight (and where the edges are)
 
-The security model has two **enforced** halves, and we are precise about the
-boundaries — see [`SECURITY.md`](SECURITY.md) for the full model.
+The sandbox is a *safe haven* in the literal sense: the agent can experiment boldly
+because it **cannot touch the host**. That single property is at once the pitch and
+the security guarantee, and it has two **enforced** halves — see
+[`SECURITY.md`](SECURITY.md) for the full model.
 
-**Confinement (the jail).**
+**Confinement (the sandbox).**
 - The agent runs under bubblewrap with `--clearenv` and a bind list that is *only*
   the project directory (rw) — no `$HOME`, `~/.ssh`, keychain, or other path. The
   provider key/token is forwarded as a single env var at runtime and **never** enters
@@ -77,13 +82,13 @@ boundaries — see [`SECURITY.md`](SECURITY.md) for the full model.
   fork-bomb.
 - **Verified by negative control** — the discipline of proving the wall by what
   *doesn't* get through: an 8/8 probe asserts the agent cannot read outside its bind;
-  subscription auth was proven by *unsetting* the API key and watching the jail fail,
+  subscription auth was proven by *unsetting* the API key and watching the sandbox fail,
   demonstrating the key cannot leak in.
 
 **Oversight (the human gate).**
 - The agent works in a throwaway clone and can only *commit* — it never pushes and
   never holds the forge token (that's the host-side orchestrator, **outside** the
-  jail). Nothing lands without your merge/approve.
+  sandbox). Nothing lands without your merge/approve.
 - Every autonomous loop is **bounded**: the async loop caps agent revisions (the
   load-bearing runaway guard), wall-clock, and cost, and escalates to *needs-human*
   rather than running away.
@@ -105,15 +110,24 @@ boundaries — see [`SECURITY.md`](SECURITY.md) for the full model.
 - Single-user today; a SaaS forge adapter (github.com) would send review data
   off-box — a conscious, non-default relaxation.
 
+> **A note on framing.** We call it a *sandbox* or *safe haven*, not a jail: the agent
+> is a trusted collaborator given a protected space to work boldly, not a prisoner
+> (that ethos is spelled out in [`AGENTS.md`](AGENTS.md)). The agent packages are
+> named `jailed-*` after the upstream
+> [jailed-agents](https://github.com/andersonjoseph/jailed-agents) library, and the
+> sandbox is built on [`jail.nix`](https://git.sr.ht/~alexdavid/jail.nix) — we keep
+> those upstream names, but the design intent is safety *in service of* the agent's
+> freedom, not restriction of it.
+
 ## Architecture at a glance
 
 ```
 macOS / Windows host
 └─ Lima Linux VM (one long-lived guest, shared Nix store)
    ├─ Zellij workspace (hands-on)         ├─ Orchestrator (async, HOST-SIDE)
-   │  ├─ HUMAN:   neovim + LSPs, lazygit  │  holds the forge token; the jail never does
-   │  └─ MACHINE: jail → agent → CLIs     │  ├─ sets up the agent clone
-   │             (rw bind: PROJECT ONLY)  │  ├─ runs the jailed agent (commits in clone)
+   │  ├─ HUMAN:   neovim + LSPs, lazygit  │  holds the forge token; the sandbox never does
+   │  └─ MACHINE: sandbox → agent → CLIs  │  ├─ sets up the agent clone
+   │             (rw bind: PROJECT ONLY)  │  ├─ runs the sandboxed agent (commits in clone)
    └───────────────────────────────────── │  └─ push + PR + read review notes → re-prompt
                                           Forge (Forgejo) ◄── review from a phone
 ```
@@ -123,7 +137,7 @@ and [async review transport](docs/knowledge/components/forgejo-transport-design.
 
 ## Quickstart (Linux guest)
 
-The jail and workspace run on Linux. The concrete VM config (Lima / cloud / NixOS)
+The sandbox and workspace run on Linux. The concrete VM config (Lima / cloud / NixOS)
 lives in a personal config repo that consumes ragent — e.g. **your-config-repo** —
 not in the framework ([running on a VM](docs/knowledge/components/running-on-a-vm.md)).
 
@@ -142,7 +156,7 @@ nix develop .#workspace     # zellij, nvim(+LSP), lazygit, git-surgeon, rg, fd, 
 ```sh
 export ANTHROPIC_API_KEY=...                      # API key, or…
 # …a Claude Pro/Max subscription (no API billing):
-claude setup-token                                # once, in a browser, OUTSIDE the jail
+claude setup-token                                # once, in a browser, OUTSIDE the sandbox
 export CLAUDE_CODE_OAUTH_TOKEN=...                # then use RAGENT_AGENT=jailed-claude-code-subscription
 ```
 
@@ -175,8 +189,8 @@ nix develop && nix run .#task-window -- "$PWD" mytask
 ```
 
 - **Your tools go in `projectTools`** (`ragent.lib.<system>.mkWorkspace { projectTools = […]; }`)
-  and land on the confined agent's in-jail PATH — so it builds/tests your project
-  *itself, in the jail*. Deps live in `flake.lock` (`nix flake update`), not a Makefile.
+  and land on the confined agent's in-sandbox PATH — so it builds/tests your project
+  *itself, in the sandbox*. Deps live in `flake.lock` (`nix flake update`), not a Makefile.
 - **Personal defaults** (a default agent, extra tools, an IDE nvim, a theme, the dev
   forge)? Consume a personal config repo like
   [your-config-repo](docs/knowledge/decisions/0018-split-your-config-repo.md) that
@@ -187,7 +201,7 @@ nix develop && nix run .#task-window -- "$PWD" mytask
 | Phase | Focus | Status |
 |---|---|---|
 | **0** | Scaffold, governance, knowledge system, plan | ✅ Complete |
-| **1** | The jail + confined agents (dogfood the jail) | ✅ Verified |
+| **1** | The sandbox + confined agents (dogfood the sandbox) | ✅ Verified |
 | **2** | Two-side Zellij workspace + git-clone review boundary | ✅ Verified |
 | **3** | Shared CLIs on PATH + per-project template | ✅ Verified |
 | **4** | Four agents (opencode, Claude Code, pi, crush) + observability | ✅ Verified |
@@ -211,6 +225,20 @@ never hand-edit it). Coding agents should start at [`AGENTS.md`](AGENTS.md).
 
 See [CONTRIBUTING](CONTRIBUTING.md), [CHANGELOG](CHANGELOG.md), and
 [`SECURITY.md`](SECURITY.md) (the confinement model + how to report a vulnerability).
+
+## Provenance — built by Claude, directed by a human
+
+Every line of ragent's *own* code and documentation was authored by **Claude**
+(Anthropic's Claude Code, on the Opus models), ideated and directed by a human
+collaborator. That isn't a disclaimer — it's the point: **ragent is an instance of
+its own thesis** — an AI doing real engineering in a safe space, under human
+direction, with a *complete, transparent record*. The receipts are in the repo: the
+[verbatim session logs](docs/knowledge/sessions/) and the
+[Architecture Decision Records](docs/knowledge/decisions/index.md) capture every
+non-trivial choice, why it was made, and the run that verified it — read them as the
+project's real changelog of *thinking*. (The referenced upstreams — `jail.nix`,
+`jailed-agents`, `git-surgeon` — are third-party, under their own licenses; see
+[`NOTICE`](NOTICE) and [`THIRD_PARTY.md`](THIRD_PARTY.md).)
 
 ## License & attribution
 

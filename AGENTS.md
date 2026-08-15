@@ -12,13 +12,15 @@ one project directory:
 
 - **HUMAN pane** — neovim + LSPs + lazygit, with an observability pane for the
   tool in use.
-- **MACHINE pane** — coding agents running confined via `jail.nix` (bubblewrap)
-  inside a Lima Linux VM, with a log/observability pane.
+- **MACHINE pane** — coding agents working in a **safe sandbox** (`jail.nix` /
+  bubblewrap) inside a Lima Linux VM, with a log/observability pane.
 
 The machine side gets a read-write bind mount to the **project directory only**;
-`$HOME`, SSH keys, and secrets are excluded; cgroup caps limit blast radius.
-Shared CLI tools go on `PATH` via the flake so every agent can call them through
-bash. Upstreams are consumed as **pinned flake inputs**, never vendored.
+`$HOME`, SSH keys, and secrets are excluded; cgroup caps limit blast radius. The
+sandbox is a safe haven, not a jail — an agent can act and ideate boldly precisely
+because a mistake can't escape its clone. Shared CLI tools go on `PATH` via the flake
+so every agent can call them through bash. Upstreams are consumed as **pinned flake
+inputs**, never vendored.
 
 Full rationale is in the knowledge bundle — start with
 [the architecture overview](docs/knowledge/components/architecture-overview.md)
@@ -27,7 +29,7 @@ and [the forward plan](docs/knowledge/components/forward-plan-phases-1-5.md).
 ## Project status
 
 - **Phase 0 (scaffold + governance): done.**
-- **Phase 1 (the jail, one agent): confinement core done.** Verified in a Lima
+- **Phase 1 (the sandbox, one agent): confinement core done.** Verified in a Lima
   guest — probe 8/8, cgroup caps enforce, DNS works, and both opencode and Claude
   Code build and run confined. A full agent-driven *edit* needs a provider key
   (ADR-0014). See ADRs 0013–0015.

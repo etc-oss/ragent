@@ -1,13 +1,15 @@
 # Security Policy
 
 ragent's whole purpose is to run AI coding agents you don't fully trust **without**
-giving them your machine. This document states what it defends, how, and — just as
-importantly — where the edges are. We don't overclaim: the discipline is *verify by
-behavior, then be honest*.
+giving them your machine. The sandbox is a safe haven in both directions — the agent
+can work boldly because it cannot reach the host, and you stay safe for the same
+reason. This document states what that defends, how, and — just as importantly —
+where the edges are. We don't overclaim: the discipline is *verify by behavior, then
+be honest*.
 
 ## The model: two enforced halves
 
-**1. Confinement (the jail).** The agent process runs under
+**1. Confinement (the sandbox).** The agent process runs under
 [`jail.nix`](https://git.sr.ht/~alexdavid/jail.nix)/bubblewrap with:
 
 - `--clearenv` and a bind list that is **only the project directory** (read-write).
@@ -22,7 +24,7 @@ behavior, then be honest*.
 
 - The agent works in a **disposable clone** and can only *commit*; it never pushes
   and never holds the forge token — all privileged forge I/O is done by a host-side
-  orchestrator **outside** the jail
+  orchestrator **outside** the sandbox
   ([ADR-0011](docs/knowledge/decisions/0011-git-worktree-review-boundary.md),
   [ADR-0016](docs/knowledge/decisions/0016-agent-clone-not-worktree.md)). Nothing
   reaches your tree without your merge/approve.
@@ -34,7 +36,7 @@ behavior, then be honest*.
 **Verified by negative control.** We prove the wall by proving what *doesn't* get
 through: an 8/8 confinement probe asserts the agent cannot read outside its bind, and
 the subscription-auth change was validated by *unsetting* the API key and confirming
-the jail fails — i.e. the key demonstrably cannot leak in.
+the sandbox fails — i.e. the key demonstrably cannot leak in.
 
 ## Secret handling
 
@@ -42,7 +44,7 @@ the jail fails — i.e. the key demonstrably cannot leak in.
   in the guest `~/.config/ragent/env` (mode `0600`) — never in the repo, the Nix
   store, a bound file, or chat.
 - The forge token lives in the guest `~/.config/ragent/forge.env` and is used
-  **host-side only**; the jailed agent never sees it.
+  **host-side only**; the sandboxed agent never sees it.
 - Before any publish, the git **history** (not just the working tree) is scanned for
   leaked secret values, and the private mirror layer (`/mirror/`) is confirmed never
   committed. A leaked-then-deleted secret is public the moment the repo is pushed.

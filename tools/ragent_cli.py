@@ -59,7 +59,7 @@ def cmd_kill(a):
 
 def build_parser():
     p = argparse.ArgumentParser(
-        prog="ragent", description="confined AI-coding agents with human oversight")
+        prog="ragent", description="AI coding agents that work boldly in a safe sandbox — with human oversight")
     groups = p.add_subparsers(dest="group", required=True)
     task = groups.add_parser("task", help="per-task operations").add_subparsers(
         dest="cmd", required=True)
