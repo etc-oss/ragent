@@ -125,7 +125,7 @@ stays in your-config-repo; only the throwaway *dev* forge is framework DX.
   `merged`/`needs-human`, timings) in a small **SQLite** store the orchestrator owns. This
   fits *operational* state best — queryable and transactional — and **doubles as the
   durable/resumable-loop state** (6c: a VM restart resumes from the DB instead of dropping a
-  task) and as **si-nergy's** central source-of-record for its dispatcher. It supersedes the
+  task) and as **xynergy's** central source-of-record for its dispatcher. It supersedes the
   "sync the local dev forge up" idea: a `git push` moves refs, not PR comments/reviews
   (Forgejo issue/PR metadata doesn't travel with git), so mirroring a throwaway instance is a
   partial record. The one thing a local DB *doesn't* give you is travel-with-the-code — so,

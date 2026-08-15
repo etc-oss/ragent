@@ -11,10 +11,10 @@ working checklist. `[x]` = done.
 - [ ] **Egress follow-up: a domain-filtering proxy** — the IP-allowlist has residual limits
   (CDN IP rotation/sharing; DNS-based exfil not covered). A domain-aware proxy is tighter.
 
-## Near-term (si-nergy pulls these)
+## Near-term (xynergy pulls these)
 - [ ] `orchestrate --json` — machine-readable result (pr_url/branch/status/outcome/iterations).
 - [ ] **SQLite** request/status store — operational source-of-record; doubles as 6c
-  resumable-loop state + si-nergy's dispatcher record (+ optional git-notes provenance footnote).
+  resumable-loop state + xynergy's dispatcher record (+ optional git-notes provenance footnote).
 - [ ] `ragent task clean` — GC reused/ephemeral clones (never auto-deleted).
 - [ ] 6c: durable/resumable waits + concurrency.
 
