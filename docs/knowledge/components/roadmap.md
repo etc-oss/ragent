@@ -68,6 +68,29 @@ has no Docker daemon; nixpkgs already ships forgejo). This refines the
 [ADR-0018](../decisions/0018-split-your-config-repo.md) boundary: the *deployed/remote* forge
 stays in your-config-repo; only the throwaway *dev* forge is framework DX.
 
+## Profiles — the agent kinds (ADR-0032, direction)
+
+ragent decouples into a **sandbox substrate + adapter-based *profiles*** — each a typed agent
+kind that wraps a **pluggable** tool behind a standard interface, exposes **ACP/A2A**, and
+declares its own **sandbox posture + egress allowlist**. The profiles are **xynergy's
+syKeepers**; xynergy conducts them. Build the **profile SPI now** (with `code` the reference)
+and add the rest **just-in-time** — each a *thin wrapper around an existing tool* (reuse; the
+sandbox layer is commodity). Critically:
+
+| Profile | Wraps (pluggable) | Sandbox / egress | Critical note |
+|---|---|---|---|
+| **`code`** (built) | review transport + a coding CLI | full FS jail; egress = LLM API | the reference — extract it *behind* the SPI |
+| **`web`** | Firecrawl (↔ Playwright / Tavily) | read-only; egress = target domains | reuse Firecrawl; egress is **per-task**, not the LLM host |
+| **`data`** | an **MCP server** over a source (Postgres / S3 / files) | read-only; egress = the source only | ragent as a *sandboxed MCP gateway* — high value, thin |
+| **`reservations`** *(hypothetical)* | a provider API (calendar / OTA / …) | usually no FS jail; egress = the provider | **high-stakes → hard human gate**; one adapter per provider — do **not** chase "all providers" |
+| **`ops` / `comms`** | email / calendar APIs | **draft-not-send**; egress-allowlisted | governance-critical (acting outputs pass the gate) |
+| **`research`** | search + `web` + `data`, composed | read-only; egress = sources | a *composition*, not a new primitive |
+
+The recurring discipline: **each profile is an adapter over a proven tool**, the substrate
+stays lean, and the moat is the *governed, sandboxed composition* (xynergy) — not the profiles
+or the sandbox (both commodity). The egress allowlist (ADR-0031) becomes **per-profile**, which
+is what lets `web`/`data`/`reservations` reach their sources without opening the whole net.
+
 ## Beyond — future guidelines (direction, not commitments)
 
 - **Per-agent config (`agentConfig`)** — a per-project knob to opt each agent into

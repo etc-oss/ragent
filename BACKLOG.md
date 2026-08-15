@@ -28,6 +28,13 @@ working checklist. `[x]` = done.
 - [ ] Remote forge end-to-end (NixOS `services.forgejo` on Tailscale).
 - [ ] 6c polish: notifications · a needs-human forge label · (optional) mobile ergonomics.
 
+## Architecture
+- [ ] **Profiles refactor (ADR-0032)** — extract a sandbox substrate + an **adapter-based
+  profile SPI** + an **ACP/A2A** endpoint; keep `code` as the reference profile behind it. Add
+  `web` (Firecrawl), `data` (MCP-over-source), `reservations`, `ops`/`comms`, `research`
+  **just-in-time** — each a thin wrapper over a pluggable tool; egress allowlist per-profile.
+  The profiles are xynergy's syKeepers.
+
 ## Direction (uncommitted)
 - [ ] `agentConfig` — per-agent native MCP/skills (fixes the harness-efficiency gap).
 - [ ] Local models — Ollama / LiteLLM (opt-in on-box inference).
