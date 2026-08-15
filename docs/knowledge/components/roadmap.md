@@ -114,20 +114,20 @@ stays in your-config-repo; only the throwaway *dev* forge is framework DX.
   a single local model a direct base-URL config is simpler; the LiteLLM proxy earns its
   keep in the multi-provider / routing case. Deferred — design as a `localModels` config
   alongside `reviewConfig` / `agentConfig`.
-- **Durable provenance — a git-native source of record.** The *code* + commit history is
-  already the durable record (and for ragent it's synced to the remote). But the *review
-  trail* — how a change was adapted: the review notes, the agent's revisions, the merge
-  decision — lives in the **forge's database**, which for the throwaway `.#dev-forge`
-  ([ADR-0029](../decisions/0029-local-dev-forge.md)) is not durable. **The answer is not to
-  "sync the local dev forge up":** a `git push` moves refs, not PR comments/reviews (Forgejo
-  issue/PR metadata doesn't travel with git), so mirroring a throwaway instance yields a
-  partial, brittle record. Instead **capture the trail into git itself** at merge — a
-  structured **merge-commit trailer** and/or **git notes** (`refs/notes/ragent`) carrying the
-  agent's `EXPLAIN` + the review iterations + the decision, optionally archiving the served
-  HTML report alongside. It survives forge death, travels with every clone, and is the honest
-  "how it was made" record — and it's the natural feed for **si-nergy's** central
-  source-of-record. The **deployed** remote forge stays the *live* forge-side record while it
-  runs; the *throwaway* dev forge is not a system of record by design.
+- **A source of record for async work — a local SQLite of requests + statuses.** Track every
+  async request (task, agent, PR, iteration count, status: `queued`/`running`/`in-review`/
+  `merged`/`needs-human`, timings) in a small **SQLite** store the orchestrator owns. This
+  fits *operational* state best — queryable and transactional — and **doubles as the
+  durable/resumable-loop state** (6c: a VM restart resumes from the DB instead of dropping a
+  task) and as **si-nergy's** central source-of-record for its dispatcher. It supersedes the
+  "sync the local dev forge up" idea: a `git push` moves refs, not PR comments/reviews
+  (Forgejo issue/PR metadata doesn't travel with git), so mirroring a throwaway instance is a
+  partial record. The one thing a local DB *doesn't* give you is travel-with-the-code — so,
+  optionally, at merge project a compact summary (`EXPLAIN` + iterations + decision) into a
+  **git-notes / merge-commit trailer** so the "how it was made" also lives in the repo. **SQLite
+  for tracking + resumable state; a git-notes footnote for durable provenance.** The
+  *deployed* remote forge stays a live forge-side view while it runs; the *throwaway* dev
+  forge is not a system of record by design.
 - **Local-resilience** — exercise the offline mirror path ([ADR-0010](../decisions/0010-local-mirror-resilience.md))
   end to end; publish (with explicit human go-ahead) and turn the prepared CI on.
 
