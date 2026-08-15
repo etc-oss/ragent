@@ -38,11 +38,27 @@
           text = ''exec ${ws.cli}/bin/ragent task ${sub} "$@"'';
         }}/bin/task-${sub}";
       };
+
+      # Host-side dev shell (edit/test THIS project on macOS / a non-guest host). The
+      # confined agent WORKSPACE is Linux-only (the jail) — run that in the Lima guest;
+      # this shell is just your project's own toolchain. Edit `packages` for your stack.
+      hostShell = hs: let p = import nixpkgs { system = hs; }; in
+        p.mkShell {
+          packages = [ (p.python3.withPackages (ps: [ ps.pytest ])) ];
+          shellHook = ''
+            echo "host dev shell — for editing/testing this project itself."
+            echo "The confined agent workspace is Linux-only: use the Lima guest"
+            echo "  (limactl shell ragent  ->  cd here  ->  nix develop / nix run .#shell)."
+          '';
+        };
     in
     {
-      # `nix develop` gives this project ragent's workspace toolchain (zellij,
+      # In the Linux guest: `nix develop` gives ragent's workspace toolchain (zellij,
       # neovim, lazygit, git-surgeon, …) + the jailed agents + YOUR projectTools.
+      # On a macOS / non-guest HOST: a light shell for hacking on this project itself.
       devShells.${system}.default = ws.devShell;
+      devShells.aarch64-darwin.default = hostShell "aarch64-darwin";
+      devShells.x86_64-darwin.default = hostShell "x86_64-darwin";
 
       # `nix run .#task-window -- <task>` launches the two-side HUMAN/MACHINE (dir = CWD)
       # workspace (ADR-0005) with the clone review boundary (ADR-0011/0016) for THIS
