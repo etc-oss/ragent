@@ -1,10 +1,11 @@
 ragent
-Copyright 2026 Gourang Abani and the ragent contributors
+Copyright 2026 Gourang Abani, Kunal Sharma, and the ragent contributors
 
 This product is licensed under the Apache License, Version 2.0 (see LICENSE).
 
 Provenance: ragent's own code and documentation were authored by Claude (Anthropic's
-Claude Code, on the Opus models), ideated and directed by a human. The verbatim
+Claude Code, on the Opus models), ideated and directed by its maintainers, Gourang
+Abani and Kunal Sharma. The verbatim
 session records and ADRs under docs/knowledge/ are the transparent decision trail.
 The third-party works below are referenced — not authored here — each under its own
 license.

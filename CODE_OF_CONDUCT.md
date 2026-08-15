@@ -12,7 +12,8 @@ The full text is at
 
 ## Enforcement
 
-Report unacceptable behavior privately to the maintainer at `aatman@randomness.life`.
+Report unacceptable behavior privately to a maintainer — Gourang Abani
+(`aatman@randomness.life`) or Kunal Sharma (`k7109021@gmail.com`).
 Reports are handled confidentially; the maintainer will review and respond as
 promptly as is reasonable, and may take any action deemed appropriate, up to and
 including a ban from project spaces.

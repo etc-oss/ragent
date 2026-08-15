@@ -70,9 +70,9 @@ the sandbox fails — i.e. the key demonstrably cannot leak in.
 ## Reporting a vulnerability
 
 **Please do not open a public issue for a security problem.** Report it privately to
-the maintainer (`aatman@randomness.life`) — or, once the project is published, via a
-private security advisory on the hosting platform. Include repro steps and the
-affected commit. We practice responsible disclosure and will credit reporters who
+a maintainer — Gourang Abani (`aatman@randomness.life`) or Kunal Sharma
+(`k7109021@gmail.com`) — or, once the project is published, via a private security
+advisory on the hosting platform. Include repro steps and the affected commit. We practice responsible disclosure and will credit reporters who
 want it.
 
 > Status: **pre-release, local-only.** No public deployment exists yet; this policy

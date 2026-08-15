@@ -228,8 +228,9 @@ See [CONTRIBUTING](CONTRIBUTING.md), [CHANGELOG](CHANGELOG.md), and
 ## Provenance — built by Claude, directed by a human
 
 Every line of ragent's *own* code and documentation was authored by **Claude**
-(Anthropic's Claude Code, on the Opus models), ideated and directed by a human
-collaborator. That isn't a disclaimer — it's the point: **ragent is an instance of
+(Anthropic's Claude Code, on the Opus models), ideated and directed by its
+maintainers, **Gourang Abani** and **Kunal Sharma**. That isn't a disclaimer — it's
+the point: **ragent is an instance of
 its own thesis** — an AI doing real engineering in a safe space, under human
 direction, with a *complete, transparent record*. The receipts are in the repo: the
 [verbatim session logs](docs/knowledge/sessions/) and the
