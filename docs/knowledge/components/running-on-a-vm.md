@@ -50,7 +50,7 @@ ssh you@your-vm
 git clone https://github.com/etc-oss/ragent && cd ragent
 nix develop .#workspace           # zellij, nvim(+LSP), lazygit, git-surgeon, agents
 export ANTHROPIC_API_KEY=...       # forwarded into the jail at runtime (ADR-0014)
-./tools/ragent-workspace.sh "$PWD" mytask   # or: nix run .#task-window -- "$PWD" mytask
+./tools/ragent-workspace.sh "$PWD" mytask   # or: nix run .#task-window -- mytask
 ```
 
 No Lima, no host-home mount. The jail confines the agent to its clone *inside the

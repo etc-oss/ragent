@@ -26,7 +26,7 @@ side. Dependencies are pinned by `flake.lock`; you update them with
 
 ```sh
 nix develop                 # workspace tools + jailed agents + your projectTools
-nix run .#task-window -- .    # launch the two-side workspace on this project
+nix run .#task-window -- mytask   # launch the two-side workspace here (dir defaults to CWD)
 ```
 
 There's also a thin **`Makefile`** — `make workspace`, `make review`, `make test` —

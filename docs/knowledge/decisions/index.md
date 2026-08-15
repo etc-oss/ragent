@@ -43,3 +43,4 @@ All were seeded from the [genesis conversation](../sessions/0001-genesis-archite
 | [0027](0027-knowledge-format-is-the-consumers-choice.md) | The knowledge/docs format is the consumer's choice — ragent doesn't impose OKF+ADR | accepted |
 | [0028](0028-runtime-python-package.md) | Promote the runtime Python into an importable `ragent` package | accepted |
 | [0029](0029-local-dev-forge.md) | A first-class local dev forge (Nix app), not docker-compose | accepted |
+| [0030](0030-cli-ergonomics-default-dir-shell.md) | CLI ergonomics — directory defaults to CWD, name optional, add `ragent shell` | accepted |

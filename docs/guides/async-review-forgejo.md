@@ -21,7 +21,7 @@ revise, and merge — **async oversight**: the code waits for you. Builds on
 ## Run a task → open a PR
 
 ```sh
-ragent task orchestrate "$PWD" mytask "add a subtract() to calc.py with a test"
+ragent task orchestrate mytask "add a subtract() to calc.py with a test"
 ```
 
 The confined agent does the work and commits in its clone; then **host-side (outside

@@ -173,12 +173,48 @@ The sandbox runs on Linux (bubblewrap needs namespaces); the VM config lives in
 limactl shell ragent                             # a Nix-enabled Linux guest
 cd /path/to/ragent && nix develop .#workspace    # tools + the four agents + the `ragent` CLI
 export ANTHROPIC_API_KEY=...                     # or a subscription token (see the guide)
-ragent task window "$PWD" mytask                 # confined agent → review the diff → merge
+```
+
+Then pick a use-case — the directory defaults to the current one, so there's no `$PWD` to type:
+
+*Quickest — a confined interactive agent (a normal Claude Code session, just sandboxed to a clone):*
+```sh
+ragent shell
+```
+
+*Interactive with oversight — the two-pane TUI (you and the agent, side by side):*
+```sh
+ragent task window mytask
+```
+
+*Hands-off — the agent does the task and opens a PR you review and merge:*
+```sh
+ragent task orchestrate "add a subtract() to calc.py with a test"
 ```
 
 **Then go deeper →** [run a sandbox agent](docs/guides/sandbox-agent.md) ·
 [async review with Forgejo](docs/guides/async-review-forgejo.md) ·
 [troubleshooting](docs/guides/troubleshooting.md).
+
+## Commands
+
+The directory defaults to the **current directory** (`-C DIR` to override); the task name
+defaults to `work`. In the workspace devshell these are `ragent …`; anywhere else the same
+commands are `nix run .#<app> -- …`.
+
+| Command | What it does |
+|---|---|
+| `ragent shell [name]` | Quickest confined interactive agent session, in a clone of the current dir |
+| `ragent shell --scratch` | …in a standing repo-less scratch sandbox (no project needed) |
+| `ragent task window [name]` | Two-pane TUI — your tree beside the confined agent in its clone |
+| `ragent task orchestrate [name] <prompt>` | Async — agent does the task → opens a PR → bounded review loop → merge |
+| `ragent task review [clone]` | Serve a task's HTML report (the agent's explanation + the real diff) over HTTP |
+| `ragent task list · attach <name> · kill <name>` | Session management |
+| `nix run .#dev-forge` | Local Forgejo + `forge.env`, so `orchestrate` works out of the box ([ADR-0029](docs/knowledge/decisions/0029-local-dev-forge.md)) |
+
+`-C DIR` overrides the project directory; `--sh` makes `shell` drop into a shell in the
+clone instead of the agent. Rationale:
+[ADR-0030](docs/knowledge/decisions/0030-cli-ergonomics-default-dir-shell.md).
 
 ## Forking ragent into another project
 
@@ -189,7 +225,7 @@ as a **pinned flake input** — reproducible deps, a one-line bump
 ```sh
 cd my-project                      # a git repo
 nix flake init -t github:etc-oss/ragent#default # a small flake.nix that consumes ragent
-nix develop && nix run .#task-window -- "$PWD" mytask
+nix develop && nix run .#task-window -- mytask   # dir defaults to CWD
 ```
 
 - **Your tools go in `projectTools`** (`ragent.lib.<system>.mkWorkspace { projectTools = […]; }`)

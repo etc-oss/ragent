@@ -12,11 +12,11 @@ shell:           ## Enter the workspace devshell (tools on PATH)
 	nix develop
 
 workspace:       ## Launch the two-side HUMAN/MACHINE workspace on this project
-	nix run .#task-window -- "$$PWD" $(or $(task),task)
+	nix run .#task-window -- $(or $(task),work)
 
 review:          ## Show the current agent branch's proposed diff (agent/<task>)
-	@git -C "$$PWD-agent-$(or $(task),task)" log --oneline -1 2>/dev/null \
-	  && git fetch -q "$$PWD-agent-$(or $(task),task)" "agent/$(or $(task),task)" \
+	@git -C "$$PWD-agent-$(or $(task),work)" log --oneline -1 2>/dev/null \
+	  && git fetch -q "$$PWD-agent-$(or $(task),work)" "agent/$(or $(task),work)" \
 	  && git --no-pager diff "$$(git branch --show-current)"..FETCH_HEAD \
 	  || echo "no agent clone yet — run 'make workspace task=<name>' first"
 

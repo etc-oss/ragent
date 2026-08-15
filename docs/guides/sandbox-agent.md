@@ -1,68 +1,110 @@
 # Guide: run a sandbox agent
 
-Run a coding agent **confined** to a project directory — no forge, no async loop. The
-agent works in a disposable clone; you review the diff and merge. The simplest use-case.
+Run a coding agent **confined** to your project — it works in a disposable clone, you
+review the diff and merge. No forge, no async loop. The simplest use-case.
+
+The project directory **defaults to the current directory** (pass `-C DIR` to override),
+and the task name defaults to `work` — so most commands take no arguments.
 
 ## Prerequisites
 
 - A Nix-enabled **Linux guest** (the sandbox/bubblewrap needs Linux namespaces) — see
   [running on a VM](../knowledge/components/running-on-a-vm.md). You can dogfood on the
   ragent repo itself.
-- A credential, **guest-only, never in the repo**:
-  - **API key:** `export ANTHROPIC_API_KEY=...`
-  - **or a Claude Pro/Max subscription:** run `claude setup-token` once (in a browser,
-    *outside* the sandbox), then `export CLAUDE_CODE_OAUTH_TOKEN=...` and select
-    `RAGENT_AGENT=jailed-claude-code-subscription`.
+- The workspace on your PATH:
+  ```sh
+  cd /path/to/your/project        # a git repo
+  nix develop .#workspace          # (or just `nix develop` in a project that consumes ragent)
+  ```
+- A credential, **guest-only, never in the repo** — pick one:
+  ```sh
+  export ANTHROPIC_API_KEY=...                              # API key
+  ```
+  ```sh
+  claude setup-token                                        # once, in a browser, OUTSIDE the sandbox
+  export CLAUDE_CODE_OAUTH_TOKEN=...                        # then a Pro/Max subscription
+  export RAGENT_AGENT=jailed-claude-code-subscription
+  ```
+- Pick any agent with `RAGENT_AGENT`: `jailed-opencode` (default), `jailed-claude-code`,
+  `jailed-claude-code-subscription`, `jailed-pi`, `jailed-crush`.
 
-Pick any agent with `RAGENT_AGENT`: `jailed-opencode` (default), `jailed-claude-code`,
-`jailed-claude-code-subscription`, `jailed-pi`, `jailed-crush`.
+## Run an agent — three ways
 
-## Option A — the two-pane TUI (interactive)
+### 1. Quickest — a confined interactive agent
+
+Drops you straight into an interactive agent session (a normal Claude Code REPL, just
+sandboxed to a clone of the current directory). This is the closest thing to a plain
+`claude` session, with the confinement + review boundary added.
 
 ```sh
-cd /path/to/your/project          # a git repo
-nix develop .#workspace           # (or just `nix develop` in a project that consumes ragent)
-ragent task window "$PWD" mytask
+ragent shell
 ```
 
-- **HUMAN** pane: neovim + LSP + lazygit on your tree.
-- **MACHINE** pane: a shell in the agent **clone** (`…-agent-mytask`). Run the agent there —
-  **interactively** (a live Claude Code REPL, just confined to the clone — like the `claude`
-  session you're used to), or one-shot with `-p`:
-  ```sh
-  # INTERACTIVE (omit -p): a normal Claude Code session, sandboxed to the clone
-  RAGENT_AGENT=jailed-claude-code-subscription ./.ragent/spawn-agent.sh
-  # one-shot / headless (this is what the async orchestrator uses):
-  ./.ragent/spawn-agent.sh -p "add a subtract() to calc.py" --dangerously-skip-permissions
-  ```
-  (Interactive still runs **confined + cgroup-capped** and logs to `.ragent/agent.log`; the
-  only difference from `orchestrate` is *you* drive it and review by hand.)
-- **Review** from the HUMAN side, then merge — nothing lands without this:
-  ```sh
-  git fetch "$PWD-agent-mytask" agent/mytask
-  git diff  <base>..FETCH_HEAD     # what the agent proposes
-  git merge FETCH_HEAD             # accept — or do nothing to discard (nothing lands)
-  ```
-  The clone **persists** and is **reused** if you re-run `mytask`; it is not auto-deleted —
-  `rm -rf "$PWD-agent-mytask"` to reclaim the space when you're done.
-
-Session ops: `ragent task list | attach mytask | kill mytask`.
-
-## Option B — one-shot, no TUI
+No project handy? Use a standing, repo-less **scratch** sandbox instead:
 
 ```sh
-RAGENT_SETUP_ONLY=1 ragent task window "$PWD" mytask       # create the clone + spawn helper only
-cd "$PWD-agent-mytask"
-RAGENT_AGENT=jailed-claude-code ./.ragent/spawn-agent.sh -p "…" --dangerously-skip-permissions
+ragent shell --scratch
 ```
 
-A self-contained HTML report (the agent's `.ragent/EXPLAIN.md` + the diff) is generated
-after each run — serve it from any device with `ragent task review "$PWD-agent-mytask"`.
+### 2. Interactive with oversight — the two-pane TUI
+
+A Zellij workspace: **HUMAN** pane (neovim + LSP + lazygit on your tree) beside the
+**MACHINE** pane (a shell in the agent's clone). You watch and steer; you review and merge.
+
+```sh
+ragent task window mytask
+```
+
+Then, in the MACHINE pane, launch the agent — **interactively** (omit `-p`) or one-shot:
+
+```sh
+./.ragent/spawn-agent.sh                                     # interactive REPL, confined
+```
+```sh
+./.ragent/spawn-agent.sh -p "add a subtract() to calc.py" --dangerously-skip-permissions
+```
+
+### 3. Hands-off — one-shot, no TUI
+
+Just run the task and stop; review the result afterwards. (For the full async **PR** loop
+instead, see [async review](async-review-forgejo.md).)
+
+```sh
+ragent task orchestrate mytask "add a subtract() to calc.py with a test" --no-follow
+```
+
+## Review and merge — nothing lands without this
+
+The agent commits on `agent/<name>` inside the clone (the sibling directory
+`<project>-agent-<name>`). From your main tree, pull it back and decide:
+
+```sh
+git fetch "$PWD-agent-mytask" agent/mytask
+```
+```sh
+git diff  <base>..FETCH_HEAD            # exactly what the agent proposes
+```
+```sh
+git merge FETCH_HEAD                    # accept — or do nothing to discard (nothing lands)
+```
+
+The clone **persists** and is **reused** if you re-run `mytask`; it is not auto-deleted:
+
+```sh
+rm -rf "$PWD-agent-mytask"              # reclaim the space when you're done
+```
+
+Prefer a rendered view? A self-contained HTML report (the agent's `.ragent/EXPLAIN.md` +
+the real diff) is generated after each run:
+
+```sh
+ragent task review "$PWD-agent-mytask"  # → http://127.0.0.1:8099/  (any device)
+```
 
 ## What the sandbox guarantees
 
-The agent gets a read-write bind to the **project directory only** — no `$HOME`, SSH
-keys, or secrets; cgroup caps bound CPU/memory/PIDs. It can act boldly *because a
-mistake can't escape* (full model in [SECURITY.md](../../SECURITY.md)).
+The agent gets a read-write bind to the **project clone only** — no `$HOME`, SSH keys, or
+secrets; cgroup caps bound CPU/memory/PIDs. It can act boldly *because a mistake can't
+escape* (full model in [SECURITY.md](../../SECURITY.md)).
 
 Snag? → **[Troubleshooting](troubleshooting.md)**.

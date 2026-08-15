@@ -10,7 +10,9 @@ The runtime lives in **`tools/ragent/`** — an importable package
 (`python3 -m ragent.cli`, `from ragent.orchestrator import …`), [ADR-0028]:
 
 - **`ragent/cli.py`** — the unified CLI: `ragent task <window|orchestrate|review|list|
-  attach|kill>` (flake `apps.default` runs `python3 -m ragent.cli`). [ADR-0023]
+  attach|kill>` + top-level **`ragent shell`** (quick confined interactive session). The
+  project dir defaults to CWD (`-C` to override), the task name to `work` (flake
+  `apps.default` runs `python3 -m ragent.cli`). [ADR-0023](../docs/knowledge/decisions/0023-unified-ragent-cli.md)/[0030](../docs/knowledge/decisions/0030-cli-ergonomics-default-dir-shell.md)
 - **`ragent/orchestrator.py`** — the async loop: set up the clone → run the confined
   agent → push → open a PR → poll the review → feed notes back → merge, all bounded;
   plus the subscription usage-limit wait layer. [ADR-0020/0024/0026]

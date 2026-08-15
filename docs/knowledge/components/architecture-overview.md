@@ -20,7 +20,8 @@ ragent is two cooperating halves that share one project directory:
 
 1. **The interactive workspace** — a two-pane Zellij TUI. You edit on the HUMAN side
    (neovim + LSP + lazygit); a confined agent works in a disposable clone on the
-   MACHINE side. You review the diff and merge. Entry: `ragent task window`.
+   MACHINE side. You review the diff and merge. Entry: `ragent task window` (or `ragent shell`
+for a quick confined agent without the TUI — [ADR-0030](../decisions/0030-cli-ergonomics-default-dir-shell.md)).
 2. **The async orchestrator** — host-side, *outside* the sandbox. It sets up the clone,
    runs the confined agent, then pushes and opens a **PR** on a forge and drives a
    bounded, human-paced review loop until you approve. Entry: `ragent task orchestrate`.

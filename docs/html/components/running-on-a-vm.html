@@ -54,7 +54,7 @@ border-radius:8px;padding:.8rem 1rem}.card .t{font-weight:600}.card .d{color:var
 git clone https://github.com/etc-oss/ragent &amp;&amp; cd ragent
 nix develop .#workspace           # zellij, nvim(+LSP), lazygit, git-surgeon, agents
 export ANTHROPIC_API_KEY=...       # forwarded into the jail at runtime (ADR-0014)
-./tools/ragent-workspace.sh &quot;$PWD&quot; mytask   # or: nix run .#task-window -- &quot;$PWD&quot; mytask</code></pre>
+./tools/ragent-workspace.sh &quot;$PWD&quot; mytask   # or: nix run .#task-window -- mytask</code></pre>
 <p>No Lima, no host-home mount. The jail confines the agent to its clone <em>inside the VM</em>; the VM confines everything to itself.</p>
 <p><strong>Implemented in your-config-repo:</strong> <code>deploy/cloud-init.yaml</code> (cloud user-data) and <code>deploy/provision.sh</code> (an existing box) — the same three steps as <code>lima/ragent.yaml</code>, shellcheck-clean.</p>
 <h3 id="b-a-nixos-microvm-nix-vm-most-reproducible">B. A NixOS / microvm.nix VM — most reproducible</h3>

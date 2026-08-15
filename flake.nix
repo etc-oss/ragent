@@ -274,6 +274,16 @@
         apps.task-window = mkTaskAlias "window" "Launch/attach the two-side human/machine TUI workspace on a project.";
         apps.task-orchestrate = mkTaskAlias "orchestrate" "Run an agent task and open a review (PR) via the configured forge adapter.";
         apps.task-review = mkTaskAlias "review" "Serve a project's per-task HTML reports over HTTP (localhost by default).";
+        # `ragent shell` (top-level, no TUI): a quick confined interactive session in a
+        # clone of the current dir (or --scratch), sane defaults (dir=CWD, name=shell). ADR-0030.
+        apps.shell = {
+          type = "app";
+          program = "${pkgs.writeShellApplication {
+            name = "ragent-shell";
+            text = ''exec ${defaultWs.cli}/bin/ragent shell "$@"'';
+          }}/bin/ragent-shell";
+          meta.description = "Quick confined interactive agent session in a clone of the current directory (or --scratch).";
+        };
         # An out-of-box LOCAL forge (Forgejo from nixpkgs, localhost) so the async review
         # loop runs without standing one up yourself — writes forge.env, foreground
         # (ADR-0029). Not a `ragent task` (it's infra, not an agent task); not Docker.
