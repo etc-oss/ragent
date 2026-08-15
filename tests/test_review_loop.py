@@ -15,8 +15,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)                                  # ephemeral_forge, test_forgejo_adapter
 sys.path.insert(0, os.path.join(HERE, "..", "tools"))    # adapters, orchestrator
 
-import orchestrator  # noqa: E402
-from adapters.forgejo import ForgejoAdapter  # noqa: E402
+from ragent import orchestrator  # noqa: E402
+from ragent.adapters.forgejo import ForgejoAdapter  # noqa: E402
 from ephemeral_forge import ephemeral_forge  # noqa: E402
 from test_forgejo_adapter import _make_repo, _review_as_human, _git  # noqa: E402
 

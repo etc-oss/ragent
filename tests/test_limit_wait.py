@@ -13,7 +13,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "tools"))
 
-import orchestrator as O  # noqa: E402
+from ragent import orchestrator as O  # noqa: E402
 
 
 def test_detector():

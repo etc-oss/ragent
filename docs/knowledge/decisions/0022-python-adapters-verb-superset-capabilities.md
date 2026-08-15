@@ -38,7 +38,7 @@ initiative) in Python, behind a `ReviewAdapter` ABC**, and **finalize the interf
 as a 9-verb superset in four capability groups.**
 
 **Language & shape.** The contract is a Python abstract base class
-(`tools/adapters/base.py`); each backend subclasses it (`forgejo.py`). HTTP is
+(`tools/ragent/adapters/base.py`); each backend subclasses it (`forgejo.py`). HTTP is
 **stdlib `urllib` only** — no `requests`, no forge SDK — matching `okf_render`'s
 dependency-light ethos; one adapter does not warrant a dependency.
 
@@ -118,4 +118,4 @@ lifecycle** (a distinct reviewer requests changes → `status`/`examine` → app
   lives there; the *adapter* stays here)
 - [async review transport](../components/forgejo-transport-design.md),
   [Roadmap](../components/roadmap.md)
-- `tools/adapters/base.py`, `tools/adapters/forgejo.py`, `tests/ephemeral_forge.py`
+- `tools/ragent/adapters/base.py`, `tools/ragent/adapters/forgejo.py`, `tests/ephemeral_forge.py`

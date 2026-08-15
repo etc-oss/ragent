@@ -105,4 +105,4 @@ by default**; `--no-follow` keeps the 6a open-and-stop path. Knobs come from env
 - [ADR-0023 — Unified ragent CLI](0023-unified-ragent-cli.md) (`ragent task orchestrate`)
 - [async review transport](../components/forgejo-transport-design.md),
   [Roadmap](../components/roadmap.md)
-- `tools/orchestrator.py` (`_step` / `review_loop`), `tests/test_review_loop.py`
+- `tools/ragent/orchestrator.py` (`_step` / `review_loop`), `tests/test_review_loop.py`

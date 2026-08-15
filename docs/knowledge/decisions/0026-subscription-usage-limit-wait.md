@@ -98,5 +98,5 @@ the logs classified it correctly.
   (this makes it usable without an API fallback)
 - [ADR-0024 — Human-paced bounded review loop](0024-human-paced-bounded-review-loop.md)
   (the idle-≠-cost reframing, applied here)
-- `tools/orchestrator.py` (`_detect_usage_limit`, `_wait_out_limits`),
+- `tools/ragent/orchestrator.py` (`_detect_usage_limit`, `_wait_out_limits`),
   `tests/test_limit_wait.py`, [Roadmap](../components/roadmap.md) (6c durability)

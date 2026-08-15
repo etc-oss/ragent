@@ -59,9 +59,9 @@ merge/approve. Full model in [`SECURITY.md`](../../../SECURITY.md).
 | **Sandbox** (bubblewrap via jail.nix; cgroup caps) | `flake.nix` (`mkAgents`, `agentBaseOptions`), `tools/ragent-confine.sh` | [ADR-0002](../decisions/0002-jail-nix-confinement.md), [ADR-0015](../decisions/0015-cgroup-caps-systemd-run.md) |
 | **Agents** (4, jailed identically; API-key or subscription Claude) | `flake.nix` (`mkAgents`) | [ADR-0013](../decisions/0013-jailed-agents-opencode-first.md), [ADR-0025](../decisions/0025-jailed-claude-subscription-auth.md), [ADR-0026](../decisions/0026-subscription-usage-limit-wait.md) |
 | **Workspace** (two-pane TUI + clone boundary) | `tools/ragent-workspace.sh`, `workspace/*.kdl` | [ADR-0005](../decisions/0005-zellij-two-pane-layout.md), [ADR-0016](../decisions/0016-agent-clone-not-worktree.md) |
-| **CLI** (`ragent task …`) | `tools/ragent_cli.py`; flake `apps.default` | [ADR-0023](../decisions/0023-unified-ragent-cli.md) |
-| **Orchestrator** (async loop, bounded) | `tools/orchestrator.py` | [ADR-0020](../decisions/0020-review-transport-adapters.md), [ADR-0024](../decisions/0024-human-paced-bounded-review-loop.md) |
-| **Review adapters** (9-verb superset + capabilities) | `tools/adapters/` (`base.py`, `forgejo.py`) | [ADR-0022](../decisions/0022-python-adapters-verb-superset-capabilities.md) |
+| **CLI** (`ragent task …`) | `tools/ragent/cli.py`; flake `apps.default` | [ADR-0023](../decisions/0023-unified-ragent-cli.md) |
+| **Orchestrator** (async loop, bounded) | `tools/ragent/orchestrator.py` | [ADR-0020](../decisions/0020-review-transport-adapters.md), [ADR-0024](../decisions/0024-human-paced-bounded-review-loop.md) |
+| **Review adapters** (9-verb superset + capabilities) | `tools/ragent/adapters/` (`base.py`, `forgejo.py`) | [ADR-0022](../decisions/0022-python-adapters-verb-superset-capabilities.md) |
 | **Served report** (EXPLAIN.md + diff → HTML) | `tools/ragent-report.py`, `tools/ragent-serve.sh` | [ADR-0021](../decisions/0021-per-task-explanatory-report.md) |
 | **Shared tools** (CLIs on PATH) | `flake.nix` (`sharedTools`); `git-surgeon` input | [ADR-0007](../decisions/0007-shared-clis-on-path.md), [ADR-0017](../decisions/0017-pin-git-surgeon.md) |
 | **Knowledge** (OKF bundle + ADRs + HTML) | `docs/knowledge/`, `tools/okf_render.py` | [ADR-0008](../decisions/0008-okf-adr-knowledge-capture.md), [ADR-0027](../decisions/0027-knowledge-format-is-the-consumers-choice.md) |
@@ -77,18 +77,16 @@ ragent/
 ├─ LICENSE · NOTICE · THIRD_PARTY.md   # Apache-2.0 + CC0 fallback; reference-don't-vendor attribution
 │
 ├─ tools/                        # host-side utilities (stdlib Python + POSIX shell)
-│  ├─ ragent_cli.py              #   `ragent task <window|orchestrate|review|list|attach|kill>`
-│  ├─ orchestrator.py            #   the async loop: setup → agent → push → PR → bounded review
-│  ├─ adapters/                  #   review-transport SPI (ABC) + backends
-│  │  ├─ base.py                 #     ReviewAdapter ABC (the 9-verb contract + capabilities)
-│  │  └─ forgejo.py              #     Forgejo adapter (stdlib urllib)
+│  ├─ ragent/                    #   the runtime PACKAGE — import as `ragent` (python3 -m ragent.cli)
+│  │  ├─ cli.py                  #     `ragent task <window|orchestrate|review|list|attach|kill>`
+│  │  ├─ orchestrator.py         #     the async loop: setup → agent → push → PR → bounded review
+│  │  └─ adapters/               #     review-transport SPI: base.py (ABC) + forgejo.py (urllib)
 │  ├─ ragent-workspace.sh        #   launch/attach the two-pane TUI + set up the clone
 │  ├─ ragent-confine.sh          #   run a jailed agent under cgroup caps (systemd scope)
-│  ├─ ragent-report.py           #   per-task HTML report (EXPLAIN.md + diff); imports okf_render
+│  ├─ ragent-report.py           #   per-task HTML report — standalone; imports okf_render
 │  ├─ ragent-serve.sh            #   serve the reports over HTTP (localhost / Tailscale)
 │  ├─ okf_render.py              #   knowledge bundle → offline HTML (stdlib only)
-│  ├─ confinement-test.sh        #   negative-control probe (the 8/8 gate)
-│  └─ mirror-example.sh          #   publishable template for the offline-mirror hedge
+│  └─ confinement-test.sh · mirror-example.sh   # the 8/8 confinement probe · offline-mirror template
 │
 ├─ tests/                        # run without the sandbox (ephemeral Forgejo + stubs)
 │  ├─ ephemeral_forge.py         #   throwaway Forgejo fixture (unique port, handle teardown)

@@ -41,3 +41,4 @@ All were seeded from the [genesis conversation](../sessions/0001-genesis-archite
 | [0025](0025-jailed-claude-subscription-auth.md) | Jailed Claude Code can authenticate via a Pro/Max subscription token | accepted |
 | [0026](0026-subscription-usage-limit-wait.md) | Wait out a subscription usage limit instead of falling back to the API | accepted |
 | [0027](0027-knowledge-format-is-the-consumers-choice.md) | The knowledge/docs format is the consumer's choice — ragent doesn't impose OKF+ADR | accepted |
+| [0028](0028-runtime-python-package.md) | Promote the runtime Python into an importable `ragent` package | accepted |

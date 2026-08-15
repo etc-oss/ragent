@@ -83,4 +83,4 @@ them would leak forge-think into the human surface and vice-versa.
   via `ragent task window` / session ops)
 - [ADR-0018 — your-config-repo split](0018-split-your-config-repo.md) (`forgejo-local`
   moves out; the CLI stays)
-- [Roadmap](../components/roadmap.md), `tools/ragent_cli.py`, `tools/orchestrator.py`
+- [Roadmap](../components/roadmap.md), `tools/ragent/cli.py`, `tools/ragent/orchestrator.py`

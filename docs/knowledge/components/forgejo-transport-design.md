@@ -67,7 +67,7 @@ per-project relaxation of confinement, not a default.
   **Tailscale** mesh so a phone reaches it privately (no public port). Shared
   instance by default; **instance-per-project** is a config option for enterprise.
 - **The orchestrator + adapters** → **ragent** (the reusable framework), in Python
-  (ADR-0022): `tools/orchestrator.py` + `tools/adapters/`, driven by the unified
+  (ADR-0022): `tools/ragent/orchestrator.py` + `tools/ragent/adapters/`, driven by the unified
   `ragent task orchestrate` CLI (ADR-0023). Reuses the clone/boundary logic in
   `tools/ragent-workspace.sh` and the confined-agent launch in
   `tools/ragent-confine.sh` + `.ragent/spawn-agent.sh`.
@@ -121,7 +121,7 @@ bespoke database. The orchestrator tracks only iteration count / caps in the clo
 ## Phasing
 
 - **6a — BUILT & verified locally (2026-07-27); rebuilt in Python (ADR-0022/0023),
-  re-verified at parity:** `tools/orchestrator.py` + `tools/adapters/forgejo.py`,
+  re-verified at parity:** `tools/ragent/orchestrator.py` + `tools/ragent/adapters/forgejo.py`,
   driven by `ragent task orchestrate`; the dev forge is `nix run .#forgejo-local` in
   **your-config-repo**. A real confined agent task opened a real mergeable PR on a
   local Forgejo — body = the agent's `EXPLAIN.md` + the served-report link

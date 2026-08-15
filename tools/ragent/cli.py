@@ -20,10 +20,11 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+_TOOLS = os.path.dirname(HERE)  # the shell launchers live in tools/, the package's parent
 
 
 def _sh(script, *args):
-    return subprocess.run(["bash", os.path.join(HERE, script), *args]).returncode
+    return subprocess.run(["bash", os.path.join(_TOOLS, script), *args]).returncode
 
 
 def _session(name):
@@ -36,8 +37,7 @@ def cmd_window(a):
 
 
 def cmd_orchestrate(a):
-    sys.path.insert(0, HERE)
-    from orchestrator import orchestrate
+    from .orchestrator import orchestrate
     orchestrate(a.project, a.name, a.prompt, follow=a.follow)
 
 

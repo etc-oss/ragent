@@ -17,9 +17,9 @@ import sys
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)  # so `adapters` (and the report generator) resolve
+_TOOLS = os.path.dirname(HERE)  # tools/ — the shell launchers live here
 
-from adapters import load, CODE, REVIEW, CONVERSATION, REPLY_MARKER  # noqa: E402
+from .adapters import load, CODE, REVIEW, CONVERSATION, REPLY_MARKER
 
 # Appended to every task prompt so the agent leaves the artifacts review needs.
 _PROMPT_SUFFIX = """
@@ -263,7 +263,7 @@ def orchestrate(project, task, prompt, agent=None, follow=True):
     env = os.environ.copy()
     env["RAGENT_SETUP_ONLY"] = "1"
     env["RAGENT_AGENT"] = agent
-    subprocess.run(["bash", os.path.join(HERE, "ragent-workspace.sh"), project, task],
+    subprocess.run(["bash", os.path.join(_TOOLS, "ragent-workspace.sh"), project, task],
                    env=env, check=True, stdout=subprocess.DEVNULL)
 
     # 2. Run the confined agent (commits in the clone, writes EXPLAIN.md).

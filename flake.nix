@@ -221,7 +221,8 @@
                 export RAGENT_ZELLIJ_CONFIG="''${RAGENT_ZELLIJ_CONFIG:-${./workspace/zellij-config.kdl}}"
                 export RAGENT_LAZYGIT_CONFIG="''${RAGENT_LAZYGIT_CONFIG:-${./workspace/lazygit-theme.yml}}"
                 export RAGENT_AGENT="''${RAGENT_AGENT:-${defaultAgent}}"
-                exec python3 ${toolsDir}/ragent_cli.py "$@"
+                export PYTHONPATH="${toolsDir}''${PYTHONPATH:+:$PYTHONPATH}"
+                exec python3 -m ragent.cli "$@"
               '';
             };
             devShell = pkgs.mkShell {

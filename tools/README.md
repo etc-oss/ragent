@@ -4,16 +4,19 @@ Host-side utilities for ragent — **stdlib Python + POSIX shell**, no third-par
 packages. Split by *role*: Python for logic (CLI, orchestrator, adapters, renderers),
 shell for process/launch plumbing.
 
-## CLI + orchestration (Python)
+## The `ragent` package (Python)
 
-- **`ragent_cli.py`** — the unified CLI: `ragent task <window|orchestrate|review|list|
-  attach|kill>` (flake `apps.default`). [ADR-0023]
-- **`orchestrator.py`** — the async loop: set up the clone → run the confined agent →
-  push → open a PR → poll the review → feed notes back → merge, all bounded. Also the
-  subscription usage-limit wait layer. [ADR-0020/0024/0026]
-- **`adapters/`** — the review-transport SPI. `base.py` = the `ReviewAdapter` ABC (the
-  9-verb contract + `capabilities`); `forgejo.py` implements it over stdlib `urllib`.
-  [ADR-0022]
+The runtime lives in **`tools/ragent/`** — an importable package
+(`python3 -m ragent.cli`, `from ragent.orchestrator import …`), [ADR-0028]:
+
+- **`ragent/cli.py`** — the unified CLI: `ragent task <window|orchestrate|review|list|
+  attach|kill>` (flake `apps.default` runs `python3 -m ragent.cli`). [ADR-0023]
+- **`ragent/orchestrator.py`** — the async loop: set up the clone → run the confined
+  agent → push → open a PR → poll the review → feed notes back → merge, all bounded;
+  plus the subscription usage-limit wait layer. [ADR-0020/0024/0026]
+- **`ragent/adapters/`** — the review-transport SPI. `base.py` = the `ReviewAdapter`
+  ABC (the 9-verb contract + `capabilities`); `forgejo.py` implements it over stdlib
+  `urllib`. [ADR-0022]
 
 ## Sandbox + workspace (shell)
 
@@ -39,7 +42,9 @@ shell for process/launch plumbing.
 - **`mirror-example.sh`** — a publishable template for the offline/local-mirror hedge
   ([ADR-0010]); the actual mirror stays out of the repo (`.gitignore` excludes `/mirror/`).
 
-> **Layout note (for contributors).** These are flat by design at this size (~11 files).
-> If the layer grows, the plan is to promote the Python into an importable `ragent`
-> package (retiring the `sys.path` shims and the hyphenated script names) and group by
-> *concern* — **not** by language. See the [architecture overview](../docs/knowledge/components/architecture-overview.md).
+> **Layout note (for contributors).** The runtime Python is an importable **`ragent`
+> package** ([ADR-0028](../docs/knowledge/decisions/0028-runtime-python-package.md)) —
+> clean relative imports, no `sys.path` shims. The standalone tools (`okf_render.py`,
+> `ragent-report.py`, and the shell launchers) stay **flat**: they're path-referenced
+> across the docs/CI and depend only on `okf_render`, not the package. Grouping is by
+> *concern*, not language.
