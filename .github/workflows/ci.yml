@@ -25,6 +25,21 @@ jobs:
       - name: Confinement negative-control gate
         run: bash tools/confinement-test.sh
 
+  tests:
+    # The Python suites that DON'T need the jail: the rate-limit wait layer (stdlib
+    # only) and the forge adapter + 6b review loop (against an ephemeral Forgejo — no
+    # bubblewrap, so these run on stock CI runners). The jail itself is covered by the
+    # flake-check job's confinement gate above.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Rate-limit wait layer (stdlib only)
+        run: python3 tests/test_limit_wait.py
+      - name: Forge adapter + 6b review loop (ephemeral Forgejo)
+        run: nix shell nixpkgs#forgejo nixpkgs#git nixpkgs#python3 --command bash -c 'python3 tests/test_forgejo_adapter.py && python3 tests/test_review_loop.py'
+
   docs-sync:
     # The generated HTML must be committed in sync with docs/knowledge/.
     runs-on: ubuntu-latest

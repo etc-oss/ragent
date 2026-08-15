@@ -13,9 +13,9 @@ jail* with the agent. Every decision is captured as an ADR in an
 
 > **Status (2026-08): Phases 0–6 built and verified locally** (macOS host + a Lima
 > Linux guest) — the confinement gate, four confined agents, the two-side workspace
-> with a git-clone review boundary, the shared tooling layer, **and the full async
-> review loop** (a real jailed agent opens a real PR; a bounded, human-paced loop
-> feeds your review notes back until you approve and it merges). Claude Code can
+> with a git-clone review boundary, the shared tooling layer, **and the async review
+> loop** (a real jailed agent opens a real PR; a bounded, human-paced loop takes your
+> review notes → revise → approve → merge). Claude Code can
 > authenticate by API key **or** Pro/Max subscription. **Local-only — nothing is
 > published;** publishing is a deliberate, human-gated step. Every claim here is
 > backed by a real run in the guest, and the honest edges are stated inline and in
@@ -92,8 +92,11 @@ boundaries — see [`SECURITY.md`](SECURITY.md) for the full model.
 - Bubblewrap is **namespace isolation, not a VM** — a kernel exploit could in
   principle escape. VM-per-agent (microvm.nix) is the roadmap's stronger boundary
   (prototype exists).
-- The async loop is verified against a **local** forge; the remote (Tailscale) path
-  is a config swap, not yet exercised end-to-end.
+- The async loop is verified against a **local** forge (remote/Tailscale is a config
+  swap, not yet exercised). Its mechanics + bounds are verified deterministically and
+  the real-agent→PR at parity, but the *full real-agent revision cycle* is proven
+  **transitively** (real agent + stubbed loop + the wired follow-path), not run as one
+  unbroken pass.
 - The subscription usage-limit **detector** is best-effort — a real weekly limit
   can't be triggered to verify, so the wait/retry *mechanics* and bound are tested,
   live detection is not ([ADR-0026](docs/knowledge/decisions/0026-subscription-usage-limit-wait.md)).

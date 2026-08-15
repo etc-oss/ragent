@@ -36,7 +36,9 @@ Lima Linux guest) and is **not yet wired into CI**.
 ### Docs / release prep
 - `SECURITY.md` (confinement model + disclosure); README rewritten for the full
   feature set + an honest "how it's airtight" section; an opt-in OpenTelemetry
-  observability item added to the roadmap; git-**history** secrets audit — clean.
+  observability item added to the roadmap; git-**history** secrets audit — clean; CI
+  now runs the Python test suites (adapter / 6b loop / rate-limit) alongside the jail
+  build.
 
 ## Unreleased — Phases 0–5 (2026-07-26)
 
