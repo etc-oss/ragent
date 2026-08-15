@@ -45,7 +45,9 @@ work on the primary device. Design in
   runaway guard; wall-clock is a resource cap (hours); "cost" is cumulative agent
   runtime; a tripped bound posts a **needs-human** reply and stops.
 - **6c** — polish: notifications, mobile ergonomics, a needs-human forge label,
-  concurrency.
+  concurrency, and **durable/resumable waits** (persist loop state + subscription
+  usage-limit waits, [ADR-0026](../decisions/0026-subscription-usage-limit-wait.md),
+  so a VM restart doesn't drop a long pause).
 
 The transport is a **pluggable adapter** (Forgejo default; GitLab, GitHub
 Enterprise, git-over-SSH), configured per project (`reviewConfig`: adapter, remote,
@@ -81,8 +83,15 @@ and the substrate the forge `reply` verb posts back into the thread (6b).
   the runaway-autonomy risk continuously, so it must earn the trust first.
 - **Multi-user / team** — once single-user is solid: shared forge orgs, per-user
   tokens, per-project instances in enterprise.
-- **Richer observability** — only if plain log panes fall short (the genesis
-  warning against a premature "unified" logger still stands).
+- **Richer observability (opt-in, OpenTelemetry)** — only if the log panes + served
+  reports fall short (the genesis warning against a premature "unified" logger still
+  stands). When warranted, an **opt-in, self-hosted-first telemetry adapter over
+  OpenTelemetry**: Claude Code already emits OTel (`CLAUDE_CODE_ENABLE_TELEMETRY` +
+  `OTEL_*` exporters), so **Langfuse or any OTLP backend** is just config — traces,
+  token/cost, latency, cross-run evals. Vendor-neutral; **self-hosted on the Tailscale
+  mesh** so prompts/traces stay inside the confinement boundary (the SaaS-vs-self-hosted
+  stance of [ADR-0020](../decisions/0020-review-transport-adapters.md)). Widening the
+  jail's egress to the collector is a conscious per-project opt-in, defaulting off.
 - **Local-resilience** — exercise the offline mirror path ([ADR-0010](../decisions/0010-local-mirror-resilience.md))
   end to end; publish (with explicit human go-ahead) and turn the prepared CI on.
 

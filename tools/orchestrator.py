@@ -11,6 +11,7 @@ partial transport degrades gracefully. The bounded comment→revise→merge loop
 """
 
 import os
+import re
 import subprocess
 import sys
 import time
@@ -33,16 +34,90 @@ def _base_branch(project):
     return r.stdout.strip() or "master"
 
 
-def _run_agent(clone, agent, prompt):
-    """Run the confined agent in its clone (spawn-agent.sh → ragent-confine.sh →
-    the jailed agent). It commits in the clone and auto-generates the HTML report."""
+# --- subscription usage-limit wait layer (ADR-0026) --------------------------
+# When the agent runs on a Claude SUBSCRIPTION (ADR-0025) and hits a usage limit, we
+# WAIT it out and retry — never fall back to the API. FAIL-SAFE: only a positive,
+# high-precision match to a known limit phrase counts as "rate-limited"; anything
+# else (a bad prompt, network, a cgroup OOM, a crash) is a real failure that surfaces
+# to the human. And the wait is BOUNDED (max_wait_hours), so a MISREAD error can't
+# hang for days — it surfaces as needs-human. Detection is best-effort and
+# version-sensitive: a real weekly limit can't be triggered on demand to verify, so
+# the tests prove the wait/retry mechanics + the bound, not live detection (ADR-0026).
+_DEFAULT_LIMIT_PATTERNS = [
+    r"spend limit reached",
+    r"hit your \w[\w ]{0,20}?limit",   # "…session / weekly / Opus limit" (composed at runtime)
+    r"\b(?:usage|weekly|session|opus) limit\b",
+]
+
+
+def _limit_patterns():
+    override = os.environ.get("RAGENT_LIMIT_PATTERNS", "").strip()
+    return [p for p in override.split("|") if p] or _DEFAULT_LIMIT_PATTERNS
+
+
+def _detect_usage_limit(text):
+    t = text or ""
+    return any(re.search(p, t, re.I) for p in _limit_patterns())
+
+
+def _reset_hint(text):
+    m = re.search(r"resets[^\n.]{0,40}", text or "", re.I)
+    return m.group(0).strip() if m else ""
+
+
+def _limit_config():
+    return {
+        "poll_sec": float(os.environ.get("RAGENT_LIMIT_POLL_SEC", 900)),            # 15 min
+        "max_wait_hours": float(os.environ.get("RAGENT_LIMIT_MAX_WAIT_HOURS", 6)),  # covers the 5h session limit
+    }
+
+
+def _run_agent_once(clone, agent, prompt):
+    """One confined agent run (spawn-agent.sh → ragent-confine.sh → jailed agent).
+    Returns (returncode, combined_output); prints the tail for visibility."""
     env = os.environ.copy()
     env["RAGENT_AGENT"] = agent
     proc = subprocess.run(["./.ragent/spawn-agent.sh", "-p", prompt,
                            "--dangerously-skip-permissions"],
                           cwd=clone, env=env, capture_output=True, text=True)
-    for line in (proc.stdout + proc.stderr).splitlines()[-6:]:
+    out = (proc.stdout or "") + (proc.stderr or "")
+    for line in out.splitlines()[-6:]:
         print("  agent:", line)
+    return proc.returncode, out
+
+
+def _wait_out_limits(run_once, *, poll_sec, max_wait_hours):
+    """Run `run_once` (→ (rc, output)); if it fails with a usage-limit signal, PAUSE
+    and retry until it succeeds or the wait cap trips. Returns idle_seconds waited —
+    idle ≠ agent runtime, so 6b excludes it from the cost bound. Split out so the
+    mechanics are unit-testable with a stub run_once (no LLM, no real sleeps)."""
+    idle = 0.0
+    start = time.monotonic()
+    attempt = 0
+    while True:
+        rc, out = run_once()
+        if rc == 0 or not _detect_usage_limit(out):
+            return idle                       # success, or a REAL failure → surfaced
+        attempt += 1
+        if (time.monotonic() - start) >= max_wait_hours * 3600:
+            print("⚠ needs-human: subscription usage limit persisted past the %gh wait "
+                  "cap — stopping (NOT falling back to the API). Raise "
+                  "RAGENT_LIMIT_MAX_WAIT_HOURS to wait longer, or pick a different "
+                  "RAGENT_AGENT." % max_wait_hours)
+            return idle
+        hint = _reset_hint(out)
+        print("⏸ subscription usage limit (attempt %d) — PAUSED %gs then retrying; "
+              "not falling back to the API (idle time).%s"
+              % (attempt, poll_sec, ("  " + hint) if hint else ""))
+        time.sleep(poll_sec)
+        idle += poll_sec
+
+
+def _run_agent(clone, agent, prompt):
+    """Run the confined agent, transparently waiting out a subscription usage limit
+    (ADR-0026). Returns idle_seconds waited (0 on the API-key path / no limit)."""
+    return _wait_out_limits(lambda: _run_agent_once(clone, agent, prompt),
+                            **_limit_config())
 
 
 def _review_body(clone, task):
@@ -105,8 +180,8 @@ def _step(adapter, review, clone, branch, base, agent, processed, auto_merge, re
             body = ("Address these review comments, then commit:\n\n"
                     + "\n\n".join("- " + n["body"] for n in new))
             t0 = time.monotonic()
-            revise(clone, agent, body + _PROMPT_SUFFIX)
-            spent = time.monotonic() - t0
+            idle = revise(clone, agent, body + _PROMPT_SUFFIX) or 0.0
+            spent = max(0.0, time.monotonic() - t0 - idle)  # idle (limit waits) ≠ cost
             adapter.push(clone, branch, base)
             adapter.reply(review, "addressed the latest review notes; pushed an update.")
             for n in new:
