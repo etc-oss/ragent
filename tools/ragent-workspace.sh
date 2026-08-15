@@ -67,8 +67,19 @@ case "\$AGENT" in
   *pi*)       export RAGENT_PRECREATE_DIRS="\$HOME/.pi" ;;
   *crush*)    export RAGENT_PRECREATE_DIRS="\$HOME/.config/crush \$HOME/.local/share/crush" ;;
 esac
-echo "launching \$AGENT (confined + capped) — logging to $LOG"
-"$RAGENT_RUN" "\$BIN" "\$@" 2>&1 | tee -a "$LOG"
+# Headless (-p/--print) runs are tee'd to the log. An INTERACTIVE run (no prompt) must
+# keep the real TTY: piping stdout through tee makes the agent see a non-tty stdout and
+# fall back to --print, which then errors ("Input must be provided..."). So only tee
+# when headless; run interactive attached to the terminal.
+_headless=
+for _a in "\$@"; do case "\$_a" in -p|--print) _headless=1 ;; esac; done
+if [ -n "\$_headless" ]; then
+  echo "launching \$AGENT (confined + capped, headless) — logging to $LOG"
+  "$RAGENT_RUN" "\$BIN" "\$@" 2>&1 | tee -a "$LOG"
+else
+  echo "launching \$AGENT (confined + capped, interactive) — live TTY (not logged)"
+  "$RAGENT_RUN" "\$BIN" "\$@"
+fi
 
 # After the agent finishes, generate the task report HOST-SIDE (outside the jail):
 # the agent's own .ragent/EXPLAIN.md + the real diff → self-contained HTML.
