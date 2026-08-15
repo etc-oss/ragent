@@ -1,177 +1,224 @@
 # ragent
 
-An open-source, forkable-per-project developer workspace that makes AI-assisted
-coding **efficient** while preserving **human oversight**.
+> Confined AI coding agents with real human oversight — a forkable-per-project workspace.
 
-Two sides share one project directory inside a terminal workspace:
+ragent runs coding agents (Claude Code, opencode, pi, crush) **confined** in a
+[`jail.nix`](https://git.sr.ht/~alexdavid/jail.nix)/bubblewrap sandbox inside a
+[Lima](https://github.com/lima-vm/lima) Linux VM, and keeps a **human in the loop**
+two ways: a two-pane terminal workspace for hands-on work, and an async review loop
+(the agent opens a PR, you review from your phone, it revises, you merge). It's
+consumed as a **pinned flake input** — add your project's tools and they run *in the
+jail* with the agent. Every decision is captured as an ADR in an
+[OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog) knowledge graph.
 
-- **HUMAN** — neovim + LSPs + lazygit, with an observability pane for the tool in
-  use.
-- **MACHINE** — coding agents (Claude Code, pi, opencode) running **confined**
-  via [`jail.nix`](https://git.sr.ht/~alexdavid/jail.nix) (bubblewrap) inside a
-  [Lima](https://github.com/lima-vm/lima) Linux VM, with a log pane.
+> **Status (2026-08): Phases 0–6 built and verified locally** (macOS host + a Lima
+> Linux guest) — the confinement gate, four confined agents, the two-side workspace
+> with a git-clone review boundary, the shared tooling layer, **and the full async
+> review loop** (a real jailed agent opens a real PR; a bounded, human-paced loop
+> feeds your review notes back until you approve and it merges). Claude Code can
+> authenticate by API key **or** Pro/Max subscription. **Local-only — nothing is
+> published;** publishing is a deliberate, human-gated step. Every claim here is
+> backed by a real run in the guest, and the honest edges are stated inline and in
+> [`SECURITY.md`](SECURITY.md).
 
-The machine side gets a read-write bind mount to the **project directory only** —
-`$HOME`, SSH keys, and secrets are excluded, and cgroup caps bound blast radius.
-Shared CLI tools go on `PATH` via the flake so every agent can call them through
-bash. Upstreams are consumed as **pinned flake inputs**, never vendored.
+## What you get
 
-> **Status: Phases 0–5 built and verified locally** (macOS host + a Lima Linux
-> guest); **local-only, nothing published.** The confinement gate (8/8), cgroup
-> caps, four confined agents (opencode, Claude Code, pi, crush), the two-side
-> workspace with a git-clone review boundary, the shared tooling layer, and the
-> project template are all verified in-guest, and `nix flake check` passes there.
-> Not yet wired into CI; a real agent *edit* still needs your provider key. See
-> the [forward plan](docs/knowledge/components/forward-plan-phases-1-5.md) for the
-> honest, per-item caveats.
+- **Confinement by construction.** The agent gets a read-write bind to the *project
+  directory only*; `$HOME`, SSH keys, the environment, and secrets are excluded, and
+  cgroup caps bound CPU/memory/PIDs. Verified by an **8/8 negative-control probe** —
+  the agent *cannot* reach what isn't bound
+  ([ADR-0002](docs/knowledge/decisions/0002-jail-nix-confinement.md),
+  [ADR-0015](docs/knowledge/decisions/0015-cgroup-caps-systemd-run.md)).
+- **A hard human gate.** The agent commits only in a disposable clone; nothing
+  reaches your tree without you fetching + merging (or approving a PR) —
+  [ADR-0011](docs/knowledge/decisions/0011-git-worktree-review-boundary.md),
+  [ADR-0016](docs/knowledge/decisions/0016-agent-clone-not-worktree.md).
+- **Two oversight modes.**
+  - **Hands-on TUI** (`ragent task window`) — neovim + LSP + lazygit on your tree
+    beside the confined agent in its clone, each with a log pane
+    ([ADR-0005](docs/knowledge/decisions/0005-zellij-two-pane-layout.md)).
+  - **Async review** (`ragent task orchestrate`) — the agent does a task → opens a
+    **PR** on a self-hosted forge → a **bounded, human-paced loop** feeds your review
+    notes back to the agent → you approve → it merges. Review from your phone
+    ([ADR-0020](docs/knowledge/decisions/0020-review-transport-adapters.md),
+    [ADR-0024](docs/knowledge/decisions/0024-human-paced-bounded-review-loop.md)).
+- **A pluggable review transport.** The orchestrator is transport-agnostic — a
+  9-verb adapter + a `capabilities` handshake — so Forgejo (today), GitLab, GitHub,
+  or bare git-over-SSH slot in behind one interface; a forge-independent served HTML
+  report is the universal fallback
+  ([ADR-0022](docs/knowledge/decisions/0022-python-adapters-verb-superset-capabilities.md),
+  [ADR-0021](docs/knowledge/decisions/0021-per-task-explanatory-report.md)).
+- **Four agents, one interface.** opencode, Claude Code, pi, crush — all jailed
+  identically, with shared CLIs (git-surgeon, ripgrep, fd, jq) on the in-jail PATH
+  ([ADR-0007](docs/knowledge/decisions/0007-shared-clis-on-path.md)). Claude Code
+  authenticates by API key **or** Pro/Max **subscription** (browser `setup-token`);
+  on the subscription path there's no API fallback — it **waits out** a usage limit
+  and resumes ([ADR-0025](docs/knowledge/decisions/0025-jailed-claude-subscription-auth.md),
+  [ADR-0026](docs/knowledge/decisions/0026-subscription-usage-limit-wait.md)).
+- **Forkable per project.** Consume ragent as a pinned flake input; your
+  `projectTools` join the confined agent's PATH so it can build and test your project
+  *itself, in-jail* (verified: a jailed agent runs `pytest` in-jail) —
+  [ADR-0019](docs/knowledge/decisions/0019-per-project-forking-and-dependencies.md).
+- **Its own memory.** Every non-trivial decision is an ADR linked to the verbatim
+  session that produced it; `docs/knowledge/` is a cross-linked OKF graph.
 
-## Why this exists
+## How it's airtight (and where the edges are)
 
-The full rationale is captured in the project's own knowledge bundle, starting
-with the verbatim [genesis conversation](docs/knowledge/sessions/0001-genesis-architecture-conversation.md)
-and distilled into [Architecture Decision Records](docs/knowledge/decisions/index.md).
-In short: a jail gives real confinement (plain Nix does not); a git
-branch/worktree gives real oversight (a shared directory does not); and the one
-tooling mechanism common to every agent is the shell + filesystem, so shared
-capabilities are CLIs on `PATH`, not per-agent plugins.
+The security model has two **enforced** halves, and we are precise about the
+boundaries — see [`SECURITY.md`](SECURITY.md) for the full model.
+
+**Confinement (the jail).**
+- The agent runs under bubblewrap with `--clearenv` and a bind list that is *only*
+  the project directory (rw) — no `$HOME`, `~/.ssh`, keychain, or other path. The
+  provider key/token is forwarded as a single env var at runtime and **never** enters
+  the Nix store, the repo, or a bound file
+  ([ADR-0014](docs/knowledge/decisions/0014-runtime-env-secret-forwarding.md)).
+- cgroup caps (memory / CPU / PIDs, via a transient systemd scope) bound a runaway or
+  fork-bomb.
+- **Verified by negative control** — the discipline of proving the wall by what
+  *doesn't* get through: an 8/8 probe asserts the agent cannot read outside its bind;
+  subscription auth was proven by *unsetting* the API key and watching the jail fail,
+  demonstrating the key cannot leak in.
+
+**Oversight (the human gate).**
+- The agent works in a throwaway clone and can only *commit* — it never pushes and
+  never holds the forge token (that's the host-side orchestrator, **outside** the
+  jail). Nothing lands without your merge/approve.
+- Every autonomous loop is **bounded**: the async loop caps agent revisions (the
+  load-bearing runaway guard), wall-clock, and cost, and escalates to *needs-human*
+  rather than running away.
+
+**The honest edges (we don't overstate "airtight"):**
+- Bubblewrap is **namespace isolation, not a VM** — a kernel exploit could in
+  principle escape. VM-per-agent (microvm.nix) is the roadmap's stronger boundary
+  (prototype exists).
+- The async loop is verified against a **local** forge; the remote (Tailscale) path
+  is a config swap, not yet exercised end-to-end.
+- The subscription usage-limit **detector** is best-effort — a real weekly limit
+  can't be triggered to verify, so the wait/retry *mechanics* and bound are tested,
+  live detection is not ([ADR-0026](docs/knowledge/decisions/0026-subscription-usage-limit-wait.md)).
+- `capabilities` graceful degradation is shipped but unexercised until a second,
+  partial adapter exists.
+- Single-user today; a SaaS forge adapter (github.com) would send review data
+  off-box — a conscious, non-default relaxation.
 
 ## Architecture at a glance
 
 ```
 macOS / Windows host
 └─ Lima Linux VM (one long-lived guest, shared Nix store)
-   └─ Zellij workspace (two sides, each with a log pane)
-      ├─ HUMAN:   neovim + LSPs, lazygit
-      └─ MACHINE: jail.nix/bubblewrap → agent → shared CLIs on PATH
-                  (rw bind mount: PROJECT DIR ONLY)
+   ├─ Zellij workspace (hands-on)         ├─ Orchestrator (async, HOST-SIDE)
+   │  ├─ HUMAN:   neovim + LSPs, lazygit  │  holds the forge token; the jail never does
+   │  └─ MACHINE: jail → agent → CLIs     │  ├─ sets up the agent clone
+   │             (rw bind: PROJECT ONLY)  │  ├─ runs the jailed agent (commits in clone)
+   └───────────────────────────────────── │  └─ push + PR + read review notes → re-prompt
+                                          Forge (Forgejo) ◄── review from a phone
 ```
 
 See the [architecture overview](docs/knowledge/components/architecture-overview.md)
-for the layer-by-layer map and the decisions behind each layer.
+and [async review transport](docs/knowledge/components/forgejo-transport-design.md).
 
-## Roadmap
+## Quickstart (Linux guest)
 
-Detailed plan (tasks, exit criteria, risks) in the
-[forward plan](docs/knowledge/components/forward-plan-phases-1-5.md).
-
-| Phase | Focus | Status |
-|---|---|---|
-| **0** | Scaffold, governance, knowledge system, plan | ✅ Complete |
-| **1** | The jail, one agent (confined loop; dogfood the jail) | ✅ Core verified |
-| **2** | The Zellij workspace (two sides + review boundary) | 🚧 In progress |
-| **3** | The tooling layer (shared CLIs on PATH; project template) | ✅ Core verified |
-| **4** | Observability + more agents (opencode, Claude Code, pi, crush) | ✅ Core verified |
-| **5** | Open-source hardening (CI prepared, CONTRIBUTING, audit, VM guide) | ✅ Core (pre-publish) |
-
-See also: [CONTRIBUTING](CONTRIBUTING.md) · [CHANGELOG](CHANGELOG.md) ·
-[running ragent on a VM instead of the host](docs/knowledge/components/running-on-a-vm.md).
-
-## Knowledge bundle
-
-`docs/knowledge/` is an [OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog)
-bundle — Markdown + YAML frontmatter, cross-linked into a graph.
-
-- Browse the source: [`docs/knowledge/index.md`](docs/knowledge/index.md)
-- Generated offline HTML view + graph visualizer: `docs/html/` (build it with
-  `python3 tools/okf_render.py`; open `docs/html/index.html`)
-
-Coding agents should start at [`AGENTS.md`](AGENTS.md).
-
-## Building the docs view
-
-```sh
-python3 tools/okf_render.py     # renders docs/knowledge/ -> docs/html/
-```
-
-No third-party Python packages required (standard library only). The HTML is
-generated and must never be hand-edited.
-
-## Try the workspace (Linux guest)
-
-The jail and workspace run on Linux. The concrete VM config (Lima / cloud /
-NixOS) lives in a personal config repo that consumes ragent — e.g.
-**your-config-repo** — not in the framework (see
-[running on a VM](docs/knowledge/components/running-on-a-vm.md)).
+The jail and workspace run on Linux. The concrete VM config (Lima / cloud / NixOS)
+lives in a personal config repo that consumes ragent — e.g. **your-config-repo** —
+not in the framework ([running on a VM](docs/knowledge/components/running-on-a-vm.md)).
 
 ```sh
 # 1) one-time: a Nix-enabled Linux guest (user namespaces + cgroup delegation).
-#    Its config lives in your config repo, e.g. your-config-repo's lima/ragent.yaml:
 limactl start --name=ragent /path/to/your-config-repo/lima/ragent.yaml
 limactl shell ragent
 
 # 2) inside the guest, on a git project (this repo works):
 cd /path/to/ragent
-nix develop .#workspace                       # zellij, nvim(+LSP), lazygit, git-surgeon, rg, fd, jq, agents
-ragent task window "$PWD" mytask              # or, checkout-free: nix run .#task-window -- "$PWD" mytask
+nix develop .#workspace     # zellij, nvim(+LSP), lazygit, git-surgeon, rg, fd, jq, agents, ragent
 ```
 
-Then sanity-check at the terminal (the interactive parts that can't be verified
-headless):
+**Provide a credential** (guest-only, never in the repo):
 
-- **HUMAN tab** — neovim opens on the project; open a `.nix`/`.py`/`.sh` file and
-  confirm an LSP attaches (`gd` = go-to-def, `K` = hover). The lazygit pane shows
-  the repo.
-- **MACHINE tab** — a shell in the agent **clone** (`…-agent-mytask`). Export a
-  provider key (e.g. `ANTHROPIC_API_KEY`) — or use a Claude **subscription**
-  (`RAGENT_AGENT=jailed-claude-code-subscription` + `CLAUDE_CODE_OAUTH_TOKEN` from
-  `claude setup-token`, [ADR-0025](docs/knowledge/decisions/0025-jailed-claude-subscription-auth.md)) —
-  run `./.ragent/spawn-agent.sh`, and watch the log pane fill. The agent can only
-  touch the clone.
-- **Review** — from the HUMAN side: `git fetch <clone> agent/mytask` then
-  `git diff <default>..FETCH_HEAD`; `git merge FETCH_HEAD` to accept, or ignore to
-  discard. Nothing lands without this.
-- **Ergonomics** — confirm truecolor, clipboard copy/paste, and that Zellij's
-  keybindings don't collide with your terminal (avoid nesting tmux). These are the
-  [ADR-0005](docs/knowledge/decisions/0005-zellij-two-pane-layout.md) papercuts.
-- **Sessions / a "frozen" TUI** — a frozen or garbled screen is almost always a
-  bad `TERM` (e.g. `dumb`, which `limactl shell` can pass through). The launcher
-  now forces `xterm-256color`, but use a truecolor terminal (iTerm2 / kitty /
-  WezTerm). Manage sessions independently of a launch:
-  ```sh
-  nix run . -- task list                             # list sessions
-  nix run . -- task attach mytask                    # re-attach after Ctrl+o d (resolves ragent-mytask)
-  nix run . -- task kill mytask                      # or: zellij delete-all-sessions --yes
-  ```
-  Re-running `ragent task window` on the same task now **attaches** to an
-  existing session instead of erroring.
+```sh
+export ANTHROPIC_API_KEY=...                      # API key, or…
+# …a Claude Pro/Max subscription (no API billing):
+claude setup-token                                # once, in a browser, OUTSIDE the jail
+export CLAUDE_CODE_OAUTH_TOKEN=...                # then use RAGENT_AGENT=jailed-claude-code-subscription
+```
+
+**Hands-on:** `ragent task window "$PWD" mytask` — neovim/lazygit on your tree; a
+shell in the agent clone where `./.ragent/spawn-agent.sh` runs the confined agent.
+Review from the HUMAN side: `git fetch <clone> agent/mytask && git diff
+<base>..FETCH_HEAD`; `git merge FETCH_HEAD` to accept. Nothing lands without it.
+
+**Async (agent → PR → review → merge):**
+
+```sh
+source ~/.config/ragent/forge.env                 # adapter + forge URL/token (self-hosted)
+ragent task orchestrate "$PWD" mytask "add a subtract() to calc.py with a test"
+# → opens a PR; request changes on your phone → the agent revises → approve → it merges.
+ragent task review "$PWD-agent-mytask"            # or: serve the HTML report (no forge needed)
+```
+
+Session ops fold in: `ragent task list | attach mytask | kill mytask`.
 
 ## Forking ragent into another project
 
-Don't fork the repo, and **don't manage dependencies with a Makefile.** Adopt
-ragent as a **pinned flake input** so you get reproducible dependencies and can
-update with a one-line bump ([ADR-0019](docs/knowledge/decisions/0019-per-project-forking-and-dependencies.md)):
+Don't fork the repo, and **don't manage dependencies with a Makefile.** Adopt ragent
+as a **pinned flake input** — reproducible deps, a one-line bump
+([ADR-0019](docs/knowledge/decisions/0019-per-project-forking-and-dependencies.md)):
 
 ```sh
 cd my-project                      # a git repo
-nix flake init -t <ragent>#default # drops a small flake.nix consuming ragent
-echo "use flake" > .envrc && direnv allow   # optional: auto-load the env
-nix develop                        # zellij, nvim, lazygit, git-surgeon, agents
-nix run .#task-window -- "$PWD" mytask
+nix flake init -t <ragent>#default # a small flake.nix that consumes ragent
+nix develop && nix run .#task-window -- "$PWD" mytask
 ```
 
-- **Your project's tools go in `projectTools`** in the generated `flake.nix`
-  (which calls `ragent.lib.<system>.mkWorkspace { projectTools = [ … ]; }`). They
-  land on the **confined agent's in-jail PATH**, so the agent can build and test
-  your project *itself, inside the jail* (verified: a jailed agent runs `pytest`
-  in-jail). Dependencies live in `flake.lock`, updated with `nix flake update` —
-  *not* in a Makefile.
-- **A Makefile is fine only as a thin task-runner** that delegates to nix
-  (`make review` → `nix run .#task-window`); never as the dependency manager.
-- **Want personal defaults** (a default agent, extra tools, an IDE nvim, a theme)?
-  Consume a personal config repo like
-  [your-config-repo](docs/knowledge/decisions/0018-split-your-config-repo.md)
-  instead of ragent directly — it composes ragent and adds your opinions.
+- **Your tools go in `projectTools`** (`ragent.lib.<system>.mkWorkspace { projectTools = […]; }`)
+  and land on the confined agent's in-jail PATH — so it builds/tests your project
+  *itself, in the jail*. Deps live in `flake.lock` (`nix flake update`), not a Makefile.
+- **Personal defaults** (a default agent, extra tools, an IDE nvim, a theme, the dev
+  forge)? Consume a personal config repo like
+  [your-config-repo](docs/knowledge/decisions/0018-split-your-config-repo.md) that
+  composes ragent and adds your opinions.
+
+## Roadmap
+
+| Phase | Focus | Status |
+|---|---|---|
+| **0** | Scaffold, governance, knowledge system, plan | ✅ Complete |
+| **1** | The jail + confined agents (dogfood the jail) | ✅ Verified |
+| **2** | Two-side Zellij workspace + git-clone review boundary | ✅ Verified |
+| **3** | Shared CLIs on PATH + per-project template | ✅ Verified |
+| **4** | Four agents (opencode, Claude Code, pi, crush) + observability | ✅ Verified |
+| **5** | Open-source hardening (CI prepared, CONTRIBUTING, VM guide) | ✅ (pre-publish) |
+| **6** | Async review: adapters + orchestrator + bounded human-paced loop; subscription auth | ✅ Verified (local forge) |
+| **6c / beyond** | Remote Tailscale forge, notifications, more adapters, microvm.nix, opt-in OTel observability | Planned |
+
+The living plan and guiding principles are in the
+[roadmap](docs/knowledge/components/roadmap.md); the honest per-item caveats for
+Phases 1–5 are in the [forward plan](docs/knowledge/components/forward-plan-phases-1-5.md).
+
+## Knowledge bundle
+
+`docs/knowledge/` is an OKF bundle (Markdown + YAML frontmatter, cross-linked into a
+graph). Browse [`docs/knowledge/index.md`](docs/knowledge/index.md) or the
+[decisions index](docs/knowledge/decisions/index.md); build the offline HTML + graph
+view with `python3 tools/okf_render.py` (stdlib only; `docs/html/` is generated —
+never hand-edit it). Coding agents should start at [`AGENTS.md`](AGENTS.md).
+
+## Contributing & security
+
+See [CONTRIBUTING](CONTRIBUTING.md), [CHANGELOG](CHANGELOG.md), and
+[`SECURITY.md`](SECURITY.md) (the confinement model + how to report a vulnerability).
 
 ## License & attribution
 
-ragent's own code is licensed under [Apache-2.0](LICENSE)
-([ADR-0001](docs/knowledge/decisions/0001-apache-2.0-license.md)). It
-**references** upstreams as pinned flake inputs and does not vendor their code;
-each remains under its own license. See [`NOTICE`](NOTICE) and
-[`THIRD_PARTY.md`](THIRD_PARTY.md) for full, verified attribution — including
-that `jail.nix` is GPL-3.0 and why referencing (not vendoring) keeps this repo's
-Apache-2.0 umbrella clean.
-
-Prior art studied and credited: [jailed-agents](https://github.com/andersonjoseph/jailed-agents),
+ragent's own code is [Apache-2.0](LICENSE)
+([ADR-0001](docs/knowledge/decisions/0001-apache-2.0-license.md)). It **references**
+upstreams as pinned flake inputs and does **not** vendor their code — each keeps its
+own license. In particular **`jail.nix` is GPL-3.0**: referencing it as a build input
+(not distributing its source) is exactly what keeps this repo's Apache-2.0 umbrella
+clean ([ADR-0003](docs/knowledge/decisions/0003-consume-upstreams-as-flake-inputs.md)).
+Full, verified attribution is in [`NOTICE`](NOTICE) and
+[`THIRD_PARTY.md`](THIRD_PARTY.md). Prior art studied and credited:
+[jailed-agents](https://github.com/andersonjoseph/jailed-agents),
 [sandnix](https://github.com/srid/sandnix), and the
 [Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog).
