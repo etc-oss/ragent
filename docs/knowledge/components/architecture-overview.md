@@ -26,7 +26,9 @@ ragent is two cooperating halves that share one project directory:
    bounded, human-paced review loop until you approve. Entry: `ragent task orchestrate`.
 
 Both are the same confinement + the same human gate, from two angles: hands-on vs.
-review-on-the-go.
+review-on-the-go. Wondering whether wrapping the agent this way costs you anything? See
+[Orchestration & harness efficiency](orchestration-and-harness-efficiency.md) — the
+honest accounting of what confinement + orchestration trade away (and what they don't).
 
 ## The layered runtime
 

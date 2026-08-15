@@ -149,6 +149,10 @@ macOS / Windows host
 [architecture overview](docs/knowledge/components/architecture-overview.md) ·
 [async review transport](docs/knowledge/components/forgejo-transport-design.md).
 
+**Does confining the agent make it worse?** The honest accounting —
+[orchestration & harness efficiency](docs/knowledge/components/orchestration-and-harness-efficiency.md):
+the model and its tools are untouched; four named trade-offs, each with its mitigation.
+
 ## Quickstart (Linux guest)
 
 The sandbox runs on Linux (bubblewrap needs namespaces); the VM config lives in
