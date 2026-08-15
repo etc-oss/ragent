@@ -28,6 +28,15 @@ and the task name defaults to `work` — so most commands take no arguments.
   **Tip:** put those `export …` lines in **`~/.config/ragent/env`** (`chmod 600`) — ragent
   auto-loads that file before every confined run, so the token/key is forwarded into the
   sandbox without re-exporting each session (it never enters the Nix store; ADR-0014).
+
+  **Interactive vs. headless (subscription).** The `CLAUDE_CODE_OAUTH_TOKEN` authenticates
+  **headless** runs (`-p` / `ragent task orchestrate`) but **not interactive** ones
+  (`ragent shell`, `ragent task window`) — Claude Code only honors that env token for
+  CI/scripts and wants a **stored login** for a REPL. Do a **one-time `/login`** inside the
+  first `ragent shell` (Browser Login → open the URL on your host → paste the code): the
+  sandbox binds `~/.claude`, so the credential **persists** and every later interactive
+  session is authenticated with no prompt. (An `ANTHROPIC_API_KEY` also skips the prompt, but
+  that's Console/API billing, not a Pro/Max subscription.)
 - Pick any agent with `RAGENT_AGENT`: `jailed-opencode` (default), `jailed-claude-code`,
   `jailed-claude-code-subscription`, `jailed-pi`, `jailed-crush`.
 
