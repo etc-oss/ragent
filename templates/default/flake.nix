@@ -52,6 +52,14 @@
         task-window = mkTaskAlias "window";
         task-orchestrate = mkTaskAlias "orchestrate";
         task-review = mkTaskAlias "review";
+        # `nix run .#shell` — quick confined interactive session in a clone of CWD (ragent ADR-0030).
+        shell = {
+          type = "app";
+          program = "${pkgs.writeShellApplication {
+            name = "shell";
+            text = ''exec ${ws.cli}/bin/ragent shell "$@"'';
+          }}/bin/shell";
+        };
       };
     };
 }
