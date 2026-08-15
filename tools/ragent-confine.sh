@@ -40,15 +40,47 @@ if [ -f "$HOME/.config/ragent/env" ]; then
   set -a; . "$HOME/.config/ragent/env"; set +a
 fi
 
-if command -v systemd-run >/dev/null 2>&1; then
-  # NOTE (ADR-0015): --user scopes only enforce CPU/memory if the controllers are
-  # delegated to the user session (a `Delegate=cpu memory pids` drop-in, or run as
-  # root). Verify with `systemd-cgls` / by forcing an over-limit process before
-  # trusting the caps. If delegation is missing, this still runs — just uncapped.
+# --- network egress allowlist (ADR-0031) -------------------------------------
+# Default-DENY outbound; allow ONLY the LLM API host(s) (+ localhost + the DNS
+# resolver), enforced by a kernel BPF IP filter on a SYSTEM scope — because `--user`
+# scopes do NOT enforce IP filtering (verified on systemd 255). So a prompt-injected
+# or malicious agent cannot exfiltrate the clone or fetch arbitrary packages. Needs
+# passwordless sudo + setpriv (to drop the scope back to the caller's uid). Knobs:
+#   RAGENT_EGRESS_ALLOW="host1 host2"   hosts to allow (default: api.anthropic.com)
+#   RAGENT_EGRESS_OPEN=1                disable filtering (old open-network behaviour)
+USERHOME="$HOME"
+_egress_args() {                                   # NUL-separated systemd-run -p args
+  printf '%s\0' -p 'IPAddressDeny=any' -p 'IPAddressAllow=127.0.0.0/8' -p 'IPAddressAllow=::1/128'
+  local h ip
+  for h in ${RAGENT_EGRESS_ALLOW:-api.anthropic.com} \
+           $(awk '/^nameserver/{print $2}' /etc/resolv.conf 2>/dev/null); do
+    for ip in $(getent ahostsv4 "$h" 2>/dev/null | awk '{print $1}' | sort -u); do
+      printf '%s\0' -p "IPAddressAllow=$ip"
+    done
+  done
+}
+
+if command -v systemd-run >/dev/null 2>&1 && [ -z "${RAGENT_EGRESS_OPEN:-}" ] \
+   && command -v setpriv >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+  # Filtered: a SYSTEM scope carrying the cgroup caps AND the egress allowlist,
+  # dropped back to the caller (setpriv) so the agent never runs as root. The token
+  # rides the inherited env (sudo -E); HOME is re-pinned for the ~/.claude bind.
+  mapfile -d '' _EG < <(_egress_args)
+  echo "confined + capped + egress-allowlisted [${RAGENT_EGRESS_ALLOW:-api.anthropic.com}]" >&2
+  exec sudo -En systemd-run --scope --quiet \
+    -p MemoryMax="$MEM" -p CPUQuota="$CPU" -p TasksMax="$TASKS" \
+    "${_EG[@]}" \
+    -- setpriv --reuid="$(id -u)" --regid="$(id -g)" --clear-groups \
+    -- env "HOME=$USERHOME" "$AGENT" "$@"
+elif command -v systemd-run >/dev/null 2>&1; then
+  # No egress filter available (no sudo/setpriv, or RAGENT_EGRESS_OPEN=1): cgroup caps
+  # via a --user scope, but the network is OPEN. See SECURITY.md.
+  [ -n "${RAGENT_EGRESS_OPEN:-}" ] \
+    || echo "warning: network egress is UNRESTRICTED (need passwordless sudo + setpriv to allowlist; set RAGENT_EGRESS_OPEN=1 to silence)" >&2
   exec systemd-run --user --scope --quiet \
     -p MemoryMax="$MEM" -p CPUQuota="$CPU" -p TasksMax="$TASKS" \
     -- "$AGENT" "$@"
 else
-  echo "warning: systemd-run not found; running WITHOUT cgroup caps" >&2
+  echo "warning: systemd-run not found; running WITHOUT cgroup caps or egress limits" >&2
   exec "$AGENT" "$@"
 fi

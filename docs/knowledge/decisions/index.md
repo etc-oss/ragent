@@ -44,3 +44,4 @@ All were seeded from the [genesis conversation](../sessions/0001-genesis-archite
 | [0028](0028-runtime-python-package.md) | Promote the runtime Python into an importable `ragent` package | accepted |
 | [0029](0029-local-dev-forge.md) | A first-class local dev forge (Nix app), not docker-compose | accepted |
 | [0030](0030-cli-ergonomics-default-dir-shell.md) | CLI ergonomics — directory defaults to CWD, name optional, add `ragent shell` | accepted |
+| [0031](0031-network-egress-allowlist.md) | Network egress allowlist — default-deny, LLM API only, via a system-scope BPF IP filter | accepted |

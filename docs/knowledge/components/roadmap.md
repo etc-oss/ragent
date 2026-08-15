@@ -84,15 +84,12 @@ stays in your-config-repo; only the throwaway *dev* forge is framework DX.
   (out of scope). What remains is *more* adapters ↓.
 - **More adapters** as needed — the `ssh` (forge-less) adapter for minimal setups;
   hardening the GitLab/GitHub Enterprise ones for teams.
-- **Network egress allowlist (priority — security).** The jail currently grants the agent
-  **full outbound network** (the `network` combinator, present for the LLM API but
-  *unfiltered*), so a prompt-injected/malicious agent can reach any host, fetch + run
-  arbitrary packages (`npx`/`pip`), and **exfiltrate the clone's own data** — and the human
-  merge-gate does **not** stop exfiltration. Restrict egress to the LLM endpoint(s) via a
-  **filtering proxy or a netns+firewall** (cf. Cyrus's `sandbox.networkPolicy`, Anthropic's
-  `sandbox-runtime`). The filesystem jail is strong; the network side is open — this closes
-  it, and it is **load-bearing for any high-assurance positioning**
-  ([SECURITY.md](../../../SECURITY.md) states the gap honestly).
+- **Network egress allowlist — done ([ADR-0031](../decisions/0031-network-egress-allowlist.md)).**
+  The jail used to grant full open egress; now it **default-denies** and allows only the LLM
+  API host(s) (+ localhost + DNS), enforced by a kernel BPF IP filter on the agent's scope
+  (`RAGENT_EGRESS_ALLOW` to add hosts; `RAGENT_EGRESS_OPEN=1` to opt out). Verified by
+  negative control (a non-allowlisted host is blocked). *Follow-up:* a **domain-filtering
+  proxy** for the residual limits (IP-allowlist rotation/sharing; DNS-based exfil).
 - **Stronger isolation** — graduate from bubblewrap to **microvm.nix** for a
   VM-per-agent boundary (the [ADR-0002](../decisions/0002-jail-nix-confinement.md)
   "microvm future"; prototype already in your-config-repo).

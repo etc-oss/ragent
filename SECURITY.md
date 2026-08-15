@@ -56,17 +56,16 @@ the sandbox fails — i.e. the key demonstrably cannot leak in.
 - Runaway autonomy (loops, fork-bombs) bounded by caps + loop bounds.
 
 **Out of scope / not yet** — stated plainly, not hidden:
-- **Network egress is unrestricted.** The sandbox grants the agent **full outbound
-  network** (the `network` combinator in `flake.nix` — present for the LLM API, but *not*
-  filtered to it). So a prompt-injected or malicious agent can reach **any** host, **fetch
-  and run arbitrary packages** (`npx` / `pip` / …), and **exfiltrate the project clone's own
-  contents** — and the human merge-gate does **not** stop exfiltration (it happens over the
-  wire, mid-run, without anything landing). The filesystem jail bounds *what the agent can
-  read* (its clone only), not *where it can send it*. **The fix — a network egress
-  allowlist** (restrict the jail to the LLM endpoint via a filtering proxy or a
-  netns+firewall, as Cyrus's `sandbox.networkPolicy` and Anthropic's `sandbox-runtime` do) —
-  is a **priority** on the roadmap. Until it lands, treat the agent as *trusted-not-to-
-  exfiltrate*, not adversarial.
+- **Network egress is default-restricted ([ADR-0031](docs/knowledge/decisions/0031-network-egress-allowlist.md)), with residual limits.**
+  The sandbox now **default-denies** outbound and allows only the LLM API host(s) (+
+  localhost + DNS), enforced by a **kernel BPF IP filter** on the agent's scope — so by
+  default the agent **cannot** reach arbitrary hosts, fetch arbitrary packages (`npx`/`pip`),
+  or exfiltrate to the open internet (`RAGENT_EGRESS_ALLOW="host …"` adds hosts;
+  `RAGENT_EGRESS_OPEN=1` opts out). Residual, stated plainly: it is an **IP allowlist, not a
+  domain proxy** — CDN IP *rotation* can drop connectivity mid-session and IP *sharing* could
+  expose a co-hosted site; **DNS-based exfiltration** is not covered; and it needs
+  passwordless sudo + `setpriv` (else it falls back to open **and warns**, never silently
+  "secure"). A domain-filtering proxy is the tighter follow-up.
 - **Kernel-level sandbox escapes.** Bubblewrap is namespace isolation, *not* a VM; a
   kernel exploit could in principle escape. VM-per-agent (microvm.nix) is the
   roadmap's stronger boundary ([ADR-0002](docs/knowledge/decisions/0002-jail-nix-confinement.md)).

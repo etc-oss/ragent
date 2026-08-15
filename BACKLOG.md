@@ -5,13 +5,11 @@ The flat, prioritized task list. Strategic phasing + the "why" live in
 working checklist. `[x]` = done.
 
 ## Priority — security
-- [ ] **Network egress allowlist.** The jail grants **full outbound network** (the
-  `network` combinator in `flake.nix`, for the LLM API — unfiltered), so a prompt-injected/
-  malicious agent can reach any host, fetch + run arbitrary packages (`npx`/`pip`), and
-  **exfiltrate the clone's data** — the human merge-gate does *not* stop exfiltration.
-  Restrict egress to the LLM endpoint(s) via a filtering proxy or a netns+firewall (cf.
-  Cyrus `sandbox.networkPolicy`, Anthropic `sandbox-runtime`). Load-bearing for any
-  high-assurance positioning. Documented honestly in `SECURITY.md`.
+- [x] **Network egress allowlist (ADR-0031)** — default-deny egress; allow only the LLM API
+  host(s) via a kernel BPF IP filter on the agent's scope (`RAGENT_EGRESS_ALLOW` /
+  `RAGENT_EGRESS_OPEN`). Verified by negative control (non-allowlisted host blocked).
+- [ ] **Egress follow-up: a domain-filtering proxy** — the IP-allowlist has residual limits
+  (CDN IP rotation/sharing; DNS-based exfil not covered). A domain-aware proxy is tighter.
 
 ## Near-term (si-nergy pulls these)
 - [ ] `orchestrate --json` — machine-readable result (pr_url/branch/status/outcome/iterations).
