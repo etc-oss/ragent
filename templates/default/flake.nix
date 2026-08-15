@@ -60,6 +60,8 @@
             text = ''exec ${ws.cli}/bin/ragent shell "$@"'';
           }}/bin/shell";
         };
+        # `nix run .#dev-forge` — a local Forgejo for the async loop, re-exported from ragent (ADR-0029).
+        dev-forge = ragent.apps.${system}.dev-forge;
       };
     };
 }
