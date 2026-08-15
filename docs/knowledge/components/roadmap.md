@@ -92,6 +92,19 @@ and the substrate the forge `reply` verb posts back into the thread (6b).
   mesh** so prompts/traces stay inside the confinement boundary (the SaaS-vs-self-hosted
   stance of [ADR-0020](../decisions/0020-review-transport-adapters.md)). Widening the
   jail's egress to the collector is a conscious per-project opt-in, defaulting off.
+- **Local models (opt-in, on-box inference)** — run the agents against a **local LLM**
+  (Ollama / llama.cpp / vLLM) instead of a cloud API. A pluggable per-project knob that,
+  when opted in, **auto-installs the runtime and pulls the model** (Ollama is in
+  nixpkgs) and points each agent at it via its OpenAI-compatible base URL. The model
+  runs *outside* the sandbox; the confined agent just connects over localhost/the mesh —
+  so **inference stays on-box, nothing leaves the confinement boundary** (the same
+  self-hosted-first ethos as the forge and OTel adapters). **Evaluate LiteLLM** as the
+  normalization layer: an OpenAI-compatible proxy over 100+ backends (local *and* cloud)
+  that gives one endpoint all four agents point at, with provider routing / fallbacks /
+  budgets configured centrally (and a natural tie-in to the cost/usage-limit story). For
+  a single local model a direct base-URL config is simpler; the LiteLLM proxy earns its
+  keep in the multi-provider / routing case. Deferred — design as a `localModels` config
+  alongside `reviewConfig` / `agentConfig`.
 - **Local-resilience** — exercise the offline mirror path ([ADR-0010](../decisions/0010-local-mirror-resilience.md))
   end to end; publish (with explicit human go-ahead) and turn the prepared CI on.
 

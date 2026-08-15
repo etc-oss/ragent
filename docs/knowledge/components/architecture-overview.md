@@ -1,89 +1,131 @@
 ---
 type: component
 id: COMP-architecture-overview
-title: Architecture overview
-description: The layered architecture of ragent — host, VM, jail, the two Zellij panes, the tooling layer, and the knowledge layer — and how the seed decisions fit together.
-tags: [architecture, overview, zellij, jail, lima, nix]
-timestamp: 2026-07-26
+title: Architecture overview & file map
+description: The layered architecture of ragent as built through Phase 6 — host, Lima VM, the bubblewrap sandbox, the two-side workspace, the host-side orchestrator + review adapters, and the knowledge layer — plus a map of the repository's files.
+tags: [architecture, overview, file-map, sandbox, orchestrator, adapters, zellij, lima, nix]
+timestamp: 2026-08-15
 ---
 
-# Architecture overview
+# Architecture overview & file map
 
-`ragent` is an open-source, forkable-per-project developer workspace that makes
-AI-assisted coding efficient while preserving human oversight. This is the map;
-the [decisions](../decisions/index.md) hold the "why" and the
-[forward plan](forward-plan-phases-1-5.md) holds the "when."
+`ragent` runs coding agents in a **safe sandbox** with **human oversight**, consumed
+per-project as a pinned flake input. This is the map; the
+[decisions](../decisions/index.md) hold the "why". Everything below is **built and
+verified locally** (Phases 0–6).
 
-## The layering
+## Two halves
+
+ragent is two cooperating halves that share one project directory:
+
+1. **The interactive workspace** — a two-pane Zellij TUI. You edit on the HUMAN side
+   (neovim + LSP + lazygit); a confined agent works in a disposable clone on the
+   MACHINE side. You review the diff and merge. Entry: `ragent task window`.
+2. **The async orchestrator** — host-side, *outside* the sandbox. It sets up the clone,
+   runs the confined agent, then pushes and opens a **PR** on a forge and drives a
+   bounded, human-paced review loop until you approve. Entry: `ragent task orchestrate`.
+
+Both are the same confinement + the same human gate, from two angles: hands-on vs.
+review-on-the-go.
+
+## The layered runtime
 
 ```
 macOS / Windows host
-└─ Lima Linux VM ...................... one long-lived guest, shared Nix store   [ADR-0004, ADR-0006]
-   └─ Zellij workspace (KDL layout) ... two sides, each with a log pane          [ADR-0005]
-      ├─ HUMAN side
-      │  ├─ neovim + LSPs, lazygit ..... edits the project directory directly
-      │  └─ observability pane ......... the tool in use
-      └─ MACHINE side
-         ├─ jail.nix / bubblewrap ...... rw bind mount to the PROJECT DIR ONLY   [ADR-0002]
-         │  └─ coding agent ............ Claude Code / pi / opencode
-         │     └─ shared CLIs on PATH ... git-surgeon, etc. (via the flake)      [ADR-0007]
-         └─ observability pane ......... log tail(s)
+└─ Lima Linux VM ....................... one long-lived guest, shared Nix store   [ADR-0004/0006]
+   │
+   ├─ Zellij workspace (KDL layout) .... the interactive TUI                       [ADR-0005]
+   │  ├─ HUMAN pane:  neovim + LSPs, lazygit — edits the project tree directly
+   │  └─ MACHINE pane: a shell in the agent CLONE (branch agent/<task>)            [ADR-0016]
+   │     └─ jail.nix / bubblewrap ...... rw bind = the PROJECT DIR ONLY            [ADR-0002]
+   │        └─ coding agent ............ opencode / Claude Code / pi / crush
+   │           └─ shared CLIs on PATH .. git-surgeon, ripgrep, fd, jq             [ADR-0007]
+   │
+   └─ Orchestrator (host-side, OUTSIDE the sandbox) ...... holds the forge token   [ADR-0011/0014]
+      ├─ sets up the clone + runs the confined agent (commits in the clone)
+      ├─ push + open PR  ──►  Forge (Forgejo) ──► review from a phone
+      └─ poll status → feed review notes back → agent revises → merge (bounded)    [ADR-0024]
 ```
 
-Both sides work on the **same** project directory. The machine's access is
-confined to that directory; `$HOME`, SSH keys, and secrets are excluded, and
-cgroup caps bound blast radius. Isolation is enforced by the jail; **oversight**
-is enforced by a git boundary — the agent proposes on a branch/worktree and the
-human reviews diffs before anything lands ([ADR-0011](../decisions/0011-git-worktree-review-boundary.md)).
+**Load-bearing boundaries:** the agent's rw access is the project dir *only*
+(`$HOME`, keys, secrets excluded; cgroup caps bound blast radius); the agent only
+*commits* in its clone and never holds the forge token; nothing lands without a human
+merge/approve. Full model in [`SECURITY.md`](../../../SECURITY.md).
 
-## The layers, and the decisions behind them
+## Components → files → decisions
 
-| Layer | What it is | Decisions |
+| Component | Where | Decisions |
 |---|---|---|
-| **VM** | Lima Linux guest (bubblewrap needs Linux) | [ADR-0004](../decisions/0004-lima-vm-layer.md), [ADR-0006](../decisions/0006-one-long-lived-vm-per-project-devshells.md) |
-| **Confinement** | jail.nix wrapping bubblewrap; scoped bind mount | [ADR-0002](../decisions/0002-jail-nix-confinement.md) |
-| **Oversight** | git branch/worktree review; secrets stay human-side | [ADR-0011](../decisions/0011-git-worktree-review-boundary.md) |
-| **Workspace** | Zellij two-side layout + log panes | [ADR-0005](../decisions/0005-zellij-two-pane-layout.md) |
-| **Tooling** | shared CLIs on `PATH` via the flake; `ragent` consumed as a flake input | [ADR-0007](../decisions/0007-shared-clis-on-path.md), [ADR-0003](../decisions/0003-consume-upstreams-as-flake-inputs.md) |
-| **Knowledge** | OKF bundle + ADRs + HTML view | [ADR-0008](../decisions/0008-okf-adr-knowledge-capture.md), [knowledge-system](knowledge-system.md) |
-| **Governance** | Apache-2.0, reference-don't-vendor, local-mirror hedge | [ADR-0001](../decisions/0001-apache-2.0-license.md), [ADR-0003](../decisions/0003-consume-upstreams-as-flake-inputs.md), [ADR-0010](../decisions/0010-local-mirror-resilience.md) |
+| **Sandbox** (bubblewrap via jail.nix; cgroup caps) | `flake.nix` (`mkAgents`, `agentBaseOptions`), `tools/ragent-confine.sh` | [ADR-0002](../decisions/0002-jail-nix-confinement.md), [ADR-0015](../decisions/0015-cgroup-caps-systemd-run.md) |
+| **Agents** (4, jailed identically; API-key or subscription Claude) | `flake.nix` (`mkAgents`) | [ADR-0013](../decisions/0013-jailed-agents-opencode-first.md), [ADR-0025](../decisions/0025-jailed-claude-subscription-auth.md), [ADR-0026](../decisions/0026-subscription-usage-limit-wait.md) |
+| **Workspace** (two-pane TUI + clone boundary) | `tools/ragent-workspace.sh`, `workspace/*.kdl` | [ADR-0005](../decisions/0005-zellij-two-pane-layout.md), [ADR-0016](../decisions/0016-agent-clone-not-worktree.md) |
+| **CLI** (`ragent task …`) | `tools/ragent_cli.py`; flake `apps.default` | [ADR-0023](../decisions/0023-unified-ragent-cli.md) |
+| **Orchestrator** (async loop, bounded) | `tools/orchestrator.py` | [ADR-0020](../decisions/0020-review-transport-adapters.md), [ADR-0024](../decisions/0024-human-paced-bounded-review-loop.md) |
+| **Review adapters** (9-verb superset + capabilities) | `tools/adapters/` (`base.py`, `forgejo.py`) | [ADR-0022](../decisions/0022-python-adapters-verb-superset-capabilities.md) |
+| **Served report** (EXPLAIN.md + diff → HTML) | `tools/ragent-report.py`, `tools/ragent-serve.sh` | [ADR-0021](../decisions/0021-per-task-explanatory-report.md) |
+| **Shared tools** (CLIs on PATH) | `flake.nix` (`sharedTools`); `git-surgeon` input | [ADR-0007](../decisions/0007-shared-clis-on-path.md), [ADR-0017](../decisions/0017-pin-git-surgeon.md) |
+| **Knowledge** (OKF bundle + ADRs + HTML) | `docs/knowledge/`, `tools/okf_render.py` | [ADR-0008](../decisions/0008-okf-adr-knowledge-capture.md), [ADR-0027](../decisions/0027-knowledge-format-is-the-consumers-choice.md) |
+| **Consumption** (flake input; per-project) | `templates/default/`, `flake.nix` (`lib.mkWorkspace`) | [ADR-0003](../decisions/0003-consume-upstreams-as-flake-inputs.md), [ADR-0019](../decisions/0019-per-project-forking-and-dependencies.md) |
 
-## `ragent` as umbrella vs. as consumed input
+## File map
 
-The name `ragent` appears in two roles in the genesis conversation: (1) this
-repository — the umbrella workspace/harness — and (2) a "global config repo …
-consumed as a pinned flake input, not forked." For now this repo takes role (1):
-it is the umbrella framework, and personal/per-project config consumes it as a
-**pinned flake input** it composes and overrides, consistent with
-[ADR-0003](../decisions/0003-consume-upstreams-as-flake-inputs.md). The **split is
-now done**: **your-config-repo** consumes ragent and holds the personal layer — the
-VM/deployment specifics moved there first
-([ADR-0018](../decisions/0018-split-your-config-repo.md), realizing
-[ADR-0012](../decisions/0012-defer-global-config-split.md)).
+```
+ragent/
+├─ flake.nix                     # the core: agents, sandbox profile, mkWorkspace, apps (CLI + aliases)
+├─ AGENTS.md / CLAUDE.md         # agent entrypoint (CLAUDE.md defers to AGENTS.md)
+├─ README.md · SECURITY.md · CONTRIBUTING.md · CODE_OF_CONDUCT.md · CHANGELOG.md
+├─ LICENSE · NOTICE · THIRD_PARTY.md   # Apache-2.0 + CC0 fallback; reference-don't-vendor attribution
+│
+├─ tools/                        # host-side utilities (stdlib Python + POSIX shell)
+│  ├─ ragent_cli.py              #   `ragent task <window|orchestrate|review|list|attach|kill>`
+│  ├─ orchestrator.py            #   the async loop: setup → agent → push → PR → bounded review
+│  ├─ adapters/                  #   review-transport SPI (ABC) + backends
+│  │  ├─ base.py                 #     ReviewAdapter ABC (the 9-verb contract + capabilities)
+│  │  └─ forgejo.py              #     Forgejo adapter (stdlib urllib)
+│  ├─ ragent-workspace.sh        #   launch/attach the two-pane TUI + set up the clone
+│  ├─ ragent-confine.sh          #   run a jailed agent under cgroup caps (systemd scope)
+│  ├─ ragent-report.py           #   per-task HTML report (EXPLAIN.md + diff); imports okf_render
+│  ├─ ragent-serve.sh            #   serve the reports over HTTP (localhost / Tailscale)
+│  ├─ okf_render.py              #   knowledge bundle → offline HTML (stdlib only)
+│  ├─ confinement-test.sh        #   negative-control probe (the 8/8 gate)
+│  └─ mirror-example.sh          #   publishable template for the offline-mirror hedge
+│
+├─ tests/                        # run without the sandbox (ephemeral Forgejo + stubs)
+│  ├─ ephemeral_forge.py         #   throwaway Forgejo fixture (unique port, handle teardown)
+│  ├─ test_forgejo_adapter.py    #   the 9 verbs + full review lifecycle
+│  ├─ test_review_loop.py        #   6b mechanics + bounds (deterministic)
+│  └─ test_limit_wait.py         #   usage-limit detector + bounded wait
+│
+├─ workspace/                    # Zellij KDL layout (a @bash@/@paneBin@ template) + themes
+├─ templates/default/            # the per-project scaffold (`nix flake init -t …`)
+├─ docs/
+│  ├─ guides/                    # plain-Markdown how-tos (sandbox-agent, forgejo, troubleshooting)
+│  ├─ knowledge/                 # the OKF bundle — SOURCE OF TRUTH
+│  │  ├─ decisions/              #   ADRs (the "why")
+│  │  ├─ components/             #   this doc, the roadmap, the transport design, …
+│  │  ├─ sessions/               #   verbatim session records (never paraphrased)
+│  │  └─ conventions/            #   the working rules
+│  └─ html/                      # GENERATED from docs/knowledge/ by okf_render.py — never hand-edit
+└─ .github/workflows/ci.yml      # flake build + confinement gate + Python suites + docs-sync
+```
 
-## Structure, and deviations from the bootstrap prompt
+The **dev-forge harness** and **VM/deploy config** are deliberately *not* here — they
+live in a personal config repo that consumes ragent
+([ADR-0018](../decisions/0018-split-your-config-repo.md)); ragent keeps only an
+ephemeral-forge test fixture.
 
-The repository follows the suggested structure in
-[SESSION-0002](../sessions/0002-phase0-bootstrap-prompt.md) closely. Notable,
-deliberate choices:
+## `ragent` as umbrella vs. consumed input
 
-- **`genesis-transcript.json` (not `.md`).** The conversation was supplied as the
-  raw Claude.ai JSON export, which is the most byte-faithful source. It is kept
-  verbatim in `sessions/`, with a faithful rendered
-  [`0001` session](../sessions/0001-genesis-architecture-conversation.md)
-  alongside. This is a fidelity *gain*, not a structural deviation.
-- **`THIRD_PARTY.md` added** next to `NOTICE` — the prompt suggested
-  "`NOTICE`/`THIRD_PARTY`"; both exist, with `THIRD_PARTY.md` holding the
-  auditable table and verification notes.
-- **Per-directory `index.md`** — uses OKF's reserved directory-listing filename.
+This repo is the **umbrella framework**. Personal/per-project config consumes it as a
+**pinned flake input** it composes and overrides (`ragent.lib.<system>.mkWorkspace`),
+never a fork — [ADR-0003](../decisions/0003-consume-upstreams-as-flake-inputs.md),
+[ADR-0019](../decisions/0019-per-project-forking-and-dependencies.md). The personal
+layer (VM config, dev forge, themes, default agent) lives in a consuming repo
+([ADR-0018](../decisions/0018-split-your-config-repo.md)).
 
-None of these rise to needing a standalone "deviations" ADR; they are recorded
-here per the convention that deviations are justified in writing.
+## Status
 
-## What is built vs. planned
-
-Phase 0 (this repo) is **scaffold + governance + knowledge + plan**. The runtime
-architecture above (VM, jail, Zellij, agents) is **planned** and implemented
-incrementally from [Phase 1 onward](forward-plan-phases-1-5.md). Nothing in this
-repo has been run as a live jail or workspace yet — see the forward plan for the
-first "it works" milestone.
+Phases 0–6 are **built and verified locally** (macOS host + Lima guest): confinement
+gate 8/8, four sandboxed agents, the two-side workspace + clone boundary, the shared
+tooling layer, and the async review loop (adapters + orchestrator + bounded loop) with
+API-key or subscription auth. Next is 6c and the [roadmap](roadmap.md)'s "beyond".

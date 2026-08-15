@@ -145,49 +145,25 @@ macOS / Windows host
                                           Forge (Forgejo) ◄── review from a phone
 ```
 
-See the [architecture overview](docs/knowledge/components/architecture-overview.md)
-and [async review transport](docs/knowledge/components/forgejo-transport-design.md).
+**Full technical architecture + file map:**
+[architecture overview](docs/knowledge/components/architecture-overview.md) ·
+[async review transport](docs/knowledge/components/forgejo-transport-design.md).
 
 ## Quickstart (Linux guest)
 
-The sandbox and workspace run on Linux. The concrete VM config (Lima / cloud / NixOS)
-lives in a personal config repo that consumes ragent — e.g. **your-config-repo** —
-not in the framework ([running on a VM](docs/knowledge/components/running-on-a-vm.md)).
+The sandbox runs on Linux (bubblewrap needs namespaces); the VM config lives in
+[your config repo](docs/knowledge/components/running-on-a-vm.md).
 
 ```sh
-# 1) one-time: a Nix-enabled Linux guest (user namespaces + cgroup delegation).
-limactl start --name=ragent /path/to/your-config-repo/lima/ragent.yaml
-limactl shell ragent
-
-# 2) inside the guest, on a git project (this repo works):
-cd /path/to/ragent
-nix develop .#workspace     # zellij, nvim(+LSP), lazygit, git-surgeon, rg, fd, jq, agents, ragent
+limactl shell ragent                             # a Nix-enabled Linux guest
+cd /path/to/ragent && nix develop .#workspace    # tools + the four agents + the `ragent` CLI
+export ANTHROPIC_API_KEY=...                     # or a subscription token (see the guide)
+ragent task window "$PWD" mytask                 # confined agent → review the diff → merge
 ```
 
-**Provide a credential** (guest-only, never in the repo):
-
-```sh
-export ANTHROPIC_API_KEY=...                      # API key, or…
-# …a Claude Pro/Max subscription (no API billing):
-claude setup-token                                # once, in a browser, OUTSIDE the sandbox
-export CLAUDE_CODE_OAUTH_TOKEN=...                # then use RAGENT_AGENT=jailed-claude-code-subscription
-```
-
-**Hands-on:** `ragent task window "$PWD" mytask` — neovim/lazygit on your tree; a
-shell in the agent clone where `./.ragent/spawn-agent.sh` runs the confined agent.
-Review from the HUMAN side: `git fetch <clone> agent/mytask && git diff
-<base>..FETCH_HEAD`; `git merge FETCH_HEAD` to accept. Nothing lands without it.
-
-**Async (agent → PR → review → merge):**
-
-```sh
-source ~/.config/ragent/forge.env                 # adapter + forge URL/token (self-hosted)
-ragent task orchestrate "$PWD" mytask "add a subtract() to calc.py with a test"
-# → opens a PR; request changes on your phone → the agent revises → approve → it merges.
-ragent task review "$PWD-agent-mytask"            # or: serve the HTML report (no forge needed)
-```
-
-Session ops fold in: `ragent task list | attach mytask | kill mytask`.
+**Then go deeper →** [run a sandbox agent](docs/guides/sandbox-agent.md) ·
+[async review with Forgejo](docs/guides/async-review-forgejo.md) ·
+[troubleshooting](docs/guides/troubleshooting.md).
 
 ## Forking ragent into another project
 
