@@ -1,8 +1,8 @@
 # <your project>
 
 Scaffolded from the [ragent](https://github.com/etc-oss/ragent) per-project
-template. ragent is an open-source, forkable AI-coding workspace: confined agents
-(jail.nix) with human oversight, on Zellij + Lima.
+template. ragent is an open-source, forkable AI-coding workspace: agents that work
+boldly in a safe sandbox (jail.nix), with human oversight, on Zellij + Lima.
 
 ## One-time setup
 
@@ -17,8 +17,8 @@ template. ragent is an open-source, forkable AI-coding workspace: confined agent
 ## This project's tools (so the agent can build/test it)
 
 Edit `projectTools` in `flake.nix` to add your stack (the template ships Python +
-pytest as an example). Those tools go on the **confined agent's in-jail PATH**, so
-the agent can run your build/tests *itself*, inside the jail — not just the human
+pytest as an example). Those tools go on the **confined agent's in-sandbox PATH**, so
+the agent can run your build/tests *itself*, inside the sandbox — not just the human
 side. Dependencies are pinned by `flake.lock`; you update them with
 `nix flake update`. This is the dependency mechanism — **not** the Makefile.
 
@@ -52,3 +52,9 @@ RAGENT_SERVE_HOST=<tailnet-ip> nix run .#task-review -- <clone-dir>   # reach it
 
 It's convenient but unauthenticated — keep it on localhost or a private Tailscale
 address (ADR-0021).
+
+## Your project's docs & decisions
+
+Record them however you like — ADRs, a wiki, plain Markdown, Obsidian, or nothing at
+all. ragent uses OKF + ADRs for *its own* repo but doesn't impose a format on you
+([ADR-0027](https://github.com/etc-oss/ragent/blob/main/docs/knowledge/decisions/0027-knowledge-format-is-the-consumers-choice.md)).

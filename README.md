@@ -64,6 +64,20 @@ ADR in an [OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog) knowle
 - **Its own memory.** Every non-trivial decision is an ADR linked to the verbatim
   session that produced it; `docs/knowledge/` is a cross-linked OKF graph.
 
+## Guides
+
+Task-focused how-tos in **[`docs/guides/`](docs/guides/)**:
+
+- **[Run a sandbox agent](docs/guides/sandbox-agent.md)** — a confined agent on your project, no forge.
+- **[Async review with Forgejo](docs/guides/async-review-forgejo.md)** — agent → PR → review → merge.
+- **[Fork ragent into your project](#forking-ragent-into-another-project)** — consume it as a pinned flake input.
+- **[Troubleshooting](docs/guides/troubleshooting.md)** — the common gotchas + fixes.
+
+> ragent uses OKF + ADRs for *its own* knowledge, but it **doesn't impose a docs
+> format on you** — your project can use ADR-only, OKF, plain Markdown, Obsidian,
+> anything ([ADR-0027](docs/knowledge/decisions/0027-knowledge-format-is-the-consumers-choice.md)).
+> These guides are plain Markdown to model that.
+
 ## How it's airtight (and where the edges are)
 
 The sandbox is a *safe haven* in the literal sense: the agent can experiment boldly
