@@ -104,20 +104,40 @@
         jaCombinators = ja.internals.jail.combinators;
         agentBaseOptions = ja.commonJailOptions
           ++ map jaCombinators.try-fwd-env [ "ANTHROPIC_API_KEY" "OPENAI_API_KEY" ];
+        # Subscription auth for Claude Code (ADR-0025): forward ONLY the OAuth token
+        # (minted by `claude setup-token` OUTSIDE the jail) — NOT the API key, so the
+        # key (auth precedence #3) can't shadow the token (#5). Paired with NO
+        # CLAUDE_CODE_SIMPLE, since SIMPLE ≡ --bare, which deliberately ignores
+        # CLAUDE_CODE_OAUTH_TOKEN (verified against claude-code 2.1.220).
+        claudeSubBaseOptions = ja.commonJailOptions
+          ++ [ (jaCombinators.try-fwd-env "CLAUDE_CODE_OAUTH_TOKEN") ];
 
-        # Build the four jailed agents with a given tool set on their in-jail PATH.
+        # Build the jailed agents with a given tool set on their in-jail PATH.
         # `projectTools` (from mkWorkspace, per project) joins sharedTools so a
         # confined agent gets the project's runtime/test tools (e.g. python+pytest)
         # and can self-verify — the limitation the first real loop surfaced.
-        # CLAUDE_CODE_SIMPLE=1 makes Claude Code auth strictly via ANTHROPIC_API_KEY
-        # (forwarded above); without it a jailed run reports "Not logged in".
+        # jailed-claude-code: CLAUDE_CODE_SIMPLE=1 makes it auth strictly via
+        # ANTHROPIC_API_KEY (forwarded above); without it a jailed run reports "Not
+        # logged in". jailed-claude-code-subscription: the same agent, authenticated by
+        # a Pro/Max SUBSCRIPTION token instead (no SIMPLE; token-only forwarding). Pick
+        # either with RAGENT_AGENT; the API-key one stays the default + limit-free fallback.
         mkAgents = projectTools:
           let tools = sharedTools ++ projectTools; in rec {
             jailed-opencode = ja.makeJailedOpencode { extraPkgs = tools; baseJailOptions = agentBaseOptions; };
             jailed-claude-code = ja.makeJailedClaudeCode { extraPkgs = tools; env = { CLAUDE_CODE_SIMPLE = "1"; }; baseJailOptions = agentBaseOptions; };
+            # makeJailedClaudeCode always names its bin `jailed-claude-code`; rename it
+            # so it doesn't collide with the API-key variant on a shared PATH and so
+            # RAGENT_AGENT=jailed-claude-code-subscription resolves. (The wrapper uses
+            # absolute store paths, not $0, so a symlink under a new name is safe.)
+            jailed-claude-code-subscription =
+              let raw = ja.makeJailedClaudeCode { extraPkgs = tools; baseJailOptions = claudeSubBaseOptions; };
+              in pkgs.runCommand "jailed-claude-code-subscription" { } ''
+                mkdir -p $out/bin
+                ln -s ${raw}/bin/jailed-claude-code $out/bin/jailed-claude-code-subscription
+              '';
             jailed-pi = ja.makeJailedPi { extraPkgs = tools; baseJailOptions = agentBaseOptions; };
             jailed-crush = ja.makeJailedCrush { extraPkgs = tools; baseJailOptions = agentBaseOptions; };
-            list = [ jailed-opencode jailed-claude-code jailed-pi jailed-crush ];
+            list = [ jailed-opencode jailed-claude-code jailed-claude-code-subscription jailed-pi jailed-crush ];
           };
 
         # ---- Phase 2: the Zellij workspace (Linux) ----
@@ -238,7 +258,7 @@
       // lib.optionalAttrs isLinux {
         packages = {
           inherit jailed-probe git-surgeon;
-          inherit (defaultWs.agents) jailed-opencode jailed-claude-code jailed-pi jailed-crush;
+          inherit (defaultWs.agents) jailed-opencode jailed-claude-code jailed-claude-code-subscription jailed-pi jailed-crush;
         };
         devShells = { default = docsShell; workspace = defaultWs.devShell; };
 

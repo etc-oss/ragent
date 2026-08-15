@@ -112,8 +112,11 @@ headless):
   confirm an LSP attaches (`gd` = go-to-def, `K` = hover). The lazygit pane shows
   the repo.
 - **MACHINE tab** — a shell in the agent **clone** (`…-agent-mytask`). Export a
-  provider key (e.g. `ANTHROPIC_API_KEY`), run `./.ragent/spawn-agent.sh`, and
-  watch the log pane fill. The agent can only touch the clone.
+  provider key (e.g. `ANTHROPIC_API_KEY`) — or use a Claude **subscription**
+  (`RAGENT_AGENT=jailed-claude-code-subscription` + `CLAUDE_CODE_OAUTH_TOKEN` from
+  `claude setup-token`, [ADR-0025](docs/knowledge/decisions/0025-jailed-claude-subscription-auth.md)) —
+  run `./.ragent/spawn-agent.sh`, and watch the log pane fill. The agent can only
+  touch the clone.
 - **Review** — from the HUMAN side: `git fetch <clone> agent/mytask` then
   `git diff <default>..FETCH_HEAD`; `git merge FETCH_HEAD` to accept, or ignore to
   discard. Nothing lands without this.

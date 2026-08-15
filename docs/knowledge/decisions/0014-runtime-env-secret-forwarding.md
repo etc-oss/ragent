@@ -82,6 +82,9 @@ Wiring a real agent surfaced two integration gaps, both fixed in `flake.nix`:
 2. **Claude Code needs `CLAUDE_CODE_SIMPLE=1`** to authenticate *strictly* with
    `ANTHROPIC_API_KEY` (otherwise it prefers OAuth/keychain, which don't exist in
    the jail). Baked in via `makeJailedClaudeCode { env = { CLAUDE_CODE_SIMPLE = "1"; }; }`.
+   For a **subscription** instead of an API key, [ADR-0025](0025-jailed-claude-subscription-auth.md)
+   adds a `jailed-claude-code-subscription` variant that *omits* `CLAUDE_CODE_SIMPLE`
+   (which ≡ `--bare` and ignores OAuth) and forwards only `CLAUDE_CODE_OAUTH_TOKEN`.
 
 With both, a jailed Claude Code authenticates and completes a real task
 confined to its clone — verified end to end (edit → review → test → merge).

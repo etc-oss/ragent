@@ -26,7 +26,7 @@
 
       ws = ragent.lib.${system}.mkWorkspace {
         inherit projectTools;
-        # defaultAgent = "jailed-claude-code";   # or opencode / pi / crush
+        # defaultAgent = "jailed-claude-code";   # or -subscription (Pro/Max), opencode, pi, crush
       };
     in
     {
