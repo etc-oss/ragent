@@ -4,8 +4,8 @@ Task-focused how-tos. Pick your use-case:
 
 - **[Run a sandbox agent](sandbox-agent.md)** — a confined agent on your project; you
   review the diff and merge. No forge, no async loop. The simplest way in.
-- **[Async review with Forgejo](async-review-forgejo.md)** — agent → PR → review from
-  your phone → it revises → you merge. The "oversight on the go" loop.
+- **[Async review with Forgejo](async-review-forgejo.md)** — agent → PR → review when
+  you're ready → it revises → you merge. The async review loop.
 - **[Fork ragent into your project](../../README.md#forking-ragent-into-another-project)**
   — consume ragent as a pinned flake input and add your own tools.
 - **[Troubleshooting](troubleshooting.md)** — the gotchas this build actually hit, with fixes.

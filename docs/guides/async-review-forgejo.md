@@ -1,7 +1,8 @@
 # Guide: async review with Forgejo
 
-Run a task, get a **PR**, review it (from your phone), let the agent revise, and merge —
-oversight on the go. Builds on [run a sandbox agent](sandbox-agent.md).
+Run a task, get a **PR**, review it when you're ready (on any device), let the agent
+revise, and merge — **async oversight**: the code waits for you. Builds on
+[run a sandbox agent](sandbox-agent.md).
 
 ## Prerequisites
 

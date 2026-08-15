@@ -12,7 +12,7 @@ timestamp: 2026-07-27
 Concrete design for the async web-review loop from the
 [Phase 6 evaluation](phase6-remote-and-async-review.md), using the **buy-not-build**
 option it recommended: a self-hosted forge provides diff review, line comments,
-resolution, auth, a mobile UI, and notifications for free. Per
+resolution, auth, a web UI (works on mobile too), and notifications for free. Per
 [ADR-0020](../decisions/0020-review-transport-adapters.md) the forge is reached
 through a **pluggable adapter** — **Forgejo is the default/reference adapter**, with
 GitLab, GitHub (Enterprise), and a git-over-SSH adapter following the same
@@ -21,7 +21,7 @@ interface. **Design for review — not yet built.**
 ## Architecture
 
 ```
- phone/browser ──HTTPS or SSH tunnel──►  Forgejo  ◄── push + API ── Orchestrator (HOST/guest side, OUTSIDE the jail)
+ web browser  ──HTTPS or SSH tunnel──►  Forgejo  ◄── push + API ── Orchestrator (HOST/guest side, OUTSIDE the jail)
                                         (guest svc)                    │  holds the forge token + git push creds
                                                                        ├─ sets up the agent clone (ADR-0016)
                                                                        ├─ runs the jailed agent (commits in clone)
@@ -86,8 +86,8 @@ per-project relaxation of confinement, not a default.
    (verified working — the first real loop + `projectTools` self-test).
 3. **Outside the jail**, the orchestrator pushes `agent/<task>` to Forgejo and
    opens/updates a **PR** against the base branch.
-4. **You review on the go** in Forgejo (mobile): the diff, line comments, approve.
-   Forgejo **notifies** you when the PR is ready / updated (the "on-the-go" enabler).
+4. **You review when ready** in Forgejo (any device): the diff, line comments, approve.
+   Forgejo **notifies** you when the PR is ready / updated (the async enabler).
 5. A **webhook** (PR review-comment / review-submitted) hits the orchestrator (or it
    polls the API). It collects unresolved comments, re-prompts the confined agent
    ("address these review comments: …"), the agent revises + commits in the clone,
@@ -129,13 +129,13 @@ bespoke database. The orchestrator tracks only iteration count / caps in the clo
   against a NixOS `services.forgejo` on Tailscale — a URL swap, no code change.
 - **6b:** the bounded `examine` → agent-revision → `reply` → `merge` loop (poll
   `status`, feed new review notes to the agent), per task until resolved.
-- **6c:** polish — notifications tuning, mobile ergonomics, resolution/labels,
+- **6c:** polish — notifications tuning, (optional) mobile ergonomics, resolution/labels,
   multiple concurrent tasks.
 
 ## Decisions (resolved — ADR-0020)
 
 1. **Access:** **Tailscale** — the forge/orchestrator on a private mesh, reachable
-   from a phone without a public port or a per-session tunnel.
+   from any device without a public port or a per-session tunnel.
 2. **Auto-merge vs. manual merge:** a **per-project variable** (`autoMerge`),
    default `false` (explicit human merge).
 3. **Trigger:** **polling**, with a **per-project `pollInterval`** (no inbound port).

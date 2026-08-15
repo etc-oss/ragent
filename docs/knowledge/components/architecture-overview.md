@@ -26,7 +26,7 @@ ragent is two cooperating halves that share one project directory:
    bounded, human-paced review loop until you approve. Entry: `ragent task orchestrate`.
 
 Both are the same confinement + the same human gate, from two angles: hands-on vs.
-review-on-the-go. Wondering whether wrapping the agent this way costs you anything? See
+async (the code is there to review when you're ready). Wondering whether wrapping the agent this way costs you anything? See
 [Orchestration & harness efficiency](orchestration-and-harness-efficiency.md) — the
 honest accounting of what confinement + orchestration trade away (and what they don't).
 
@@ -45,7 +45,7 @@ macOS / Windows host
    │
    └─ Orchestrator (host-side, OUTSIDE the sandbox) ...... holds the forge token   [ADR-0011/0014]
       ├─ sets up the clone + runs the confined agent (commits in the clone)
-      ├─ push + open PR  ──►  Forge (Forgejo) ──► review from a phone
+      ├─ push + open PR  ──►  Forge (Forgejo) ──► review when ready (any device)
       └─ poll status → feed review notes back → agent revises → merge (bounded)    [ADR-0024]
 ```
 

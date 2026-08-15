@@ -8,8 +8,8 @@ work in — a [`jail.nix`](https://git.sr.ht/~alexdavid/jail.nix)/bubblewrap spa
 inside a [Lima](https://github.com/lima-vm/lima) Linux VM where an agent can act and
 ideate *boldly, precisely because it can't reach anything outside its task* — and
 keeps a **human in the loop** two ways: a two-pane terminal workspace for hands-on
-work, and an async review loop (the agent opens a PR, you review from your phone, it
-revises, you merge). It's consumed as a **pinned flake input** — add your project's
+work, and an async review loop (the agent opens a PR, you review it when you're ready
+— on any device — it revises, you merge). It's consumed as a **pinned flake input** — add your project's
 tools and they run *in the sandbox* with the agent. Every decision is captured as an
 ADR in an [OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog) knowledge graph.
 
@@ -41,7 +41,7 @@ ADR in an [OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog) knowle
     ([ADR-0005](docs/knowledge/decisions/0005-zellij-two-pane-layout.md)).
   - **Async review** (`ragent task orchestrate`) — the agent does a task → opens a
     **PR** on a self-hosted forge → a **bounded, human-paced loop** feeds your review
-    notes back to the agent → you approve → it merges. Review from your phone
+    notes back to the agent → you approve → it merges. Review when you're ready, any device
     ([ADR-0020](docs/knowledge/decisions/0020-review-transport-adapters.md),
     [ADR-0024](docs/knowledge/decisions/0024-human-paced-bounded-review-loop.md)).
 - **A pluggable review transport.** The orchestrator is transport-agnostic — a
@@ -142,7 +142,7 @@ macOS / Windows host
    │  └─ MACHINE: sandbox → agent → CLIs  │  ├─ sets up the agent clone
    │             (rw bind: PROJECT ONLY)  │  ├─ runs the sandboxed agent (commits in clone)
    └───────────────────────────────────── │  └─ push + PR + read review notes → re-prompt
-                                          Forge (Forgejo) ◄── review from a phone
+                                          Forge (Forgejo) ◄── review when ready (any device)
 ```
 
 **Full technical architecture + file map:**

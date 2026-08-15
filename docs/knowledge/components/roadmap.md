@@ -27,10 +27,12 @@ principles to steer by.
   (`lib.<system>.mkWorkspace { projectTools }`); personal config lives in a
   consuming repo (your-config-repo, [ADR-0018](../decisions/0018-split-your-config-repo.md)).
 
-## Next: Phase 6 — async review, on the go
+## Next: Phase 6 — async review & task orchestration
 
-Let a human oversee long, unsupervised runs from a phone, keeping the TUI for deep
-work on the primary device. Design in
+Let a human oversee long, unsupervised runs **asynchronously** — the agent does the task
+and makes the code available for review *when you're ready* — keeping the TUI for deep,
+hands-on work. (Review works on any device, phone included; that's a convenience, not the
+point — ragent is an async session/task orchestrator, not a mobile-first tool.) Design in
 [async review transport](forgejo-transport-design.md); decision in
 [ADR-0020](../decisions/0020-review-transport-adapters.md).
 
@@ -44,7 +46,7 @@ work on the primary device. Design in
   the confined agent, per task until resolved. `max_iterations` is the load-bearing
   runaway guard; wall-clock is a resource cap (hours); "cost" is cumulative agent
   runtime; a tripped bound posts a **needs-human** reply and stops.
-- **6c** — polish: notifications, mobile ergonomics, a needs-human forge label,
+- **6c** — polish: notifications, (optional) mobile-review ergonomics, a needs-human forge label,
   concurrency, and **durable/resumable waits** (persist loop state + subscription
   usage-limit waits, [ADR-0026](../decisions/0026-subscription-usage-limit-wait.md),
   so a VM restart doesn't drop a long pause).

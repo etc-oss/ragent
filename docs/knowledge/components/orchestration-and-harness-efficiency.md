@@ -53,11 +53,11 @@ confinement and the *same* human gate. They're not competitors; they suit differ
 | **Steering** | live, mid-task | at the PR (review → revise → merge) |
 | **Context** | warm session | fresh per revision |
 | **Native features** | drive them by hand | limited to the floor (until `agentConfig`) |
-| **Oversight** | you watch the pane | review on the go, from a phone |
+| **Oversight** | you watch the pane | review asynchronously, when you're ready |
 
 ## Verdict
 
-For its target — **well-scoped, autonomous tasks reviewed on the go** — orchestration is
+For its target — **well-scoped, autonomous tasks reviewed asynchronously** — orchestration is
 efficient: the agent runs at full model capability with only a tiny prompt suffix and a
 few bounded revisions of overhead. The trade-offs it makes are **interactivity, reach,
 and native-extension strength** — all conscious, all with a mitigation (`projectTools`
