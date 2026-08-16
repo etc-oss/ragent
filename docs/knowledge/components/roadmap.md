@@ -72,8 +72,8 @@ stays in your-config-repo; only the throwaway *dev* forge is framework DX.
 
 ragent decouples into a **sandbox substrate + adapter-based *profiles*** — each a typed agent
 kind that wraps a **pluggable** tool behind a standard interface, exposes **ACP/A2A**, and
-declares its own **sandbox posture + egress allowlist**. The profiles are **xynergy's
-syKeepers**; xynergy conducts them. Build the **profile SPI now** (with `code` the reference)
+declares its own **sandbox posture + egress allowlist**. The profiles are **a consuming orchestrator's
+typed agents**; the orchestrator composes them. Build the **profile SPI now** (with `code` the reference)
 and add the rest **just-in-time** — each a *thin wrapper around an existing tool* (reuse; the
 sandbox layer is commodity). Critically:
 
@@ -87,7 +87,7 @@ sandbox layer is commodity). Critically:
 | **`research`** | search + `web` + `data`, composed | read-only; egress = sources | a *composition*, not a new primitive |
 
 The recurring discipline: **each profile is an adapter over a proven tool**, the substrate
-stays lean, and the moat is the *governed, sandboxed composition* (xynergy) — not the profiles
+stays lean, and the moat is the *governed, sandboxed composition* (a consuming orchestrator) — not the profiles
 or the sandbox (both commodity). The egress allowlist (ADR-0031) becomes **per-profile**, which
 is what lets `web`/`data`/`reservations` reach their sources without opening the whole net.
 
@@ -148,7 +148,7 @@ is what lets `web`/`data`/`reservations` reach their sources without opening the
   `merged`/`needs-human`, timings) in a small **SQLite** store the orchestrator owns. This
   fits *operational* state best — queryable and transactional — and **doubles as the
   durable/resumable-loop state** (6c: a VM restart resumes from the DB instead of dropping a
-  task) and as **xynergy's** central source-of-record for its dispatcher. It supersedes the
+  task) and as **a consuming orchestrator's** central source-of-record for its dispatcher. It supersedes the
   "sync the local dev forge up" idea: a `git push` moves refs, not PR comments/reviews
   (Forgejo issue/PR metadata doesn't travel with git), so mirroring a throwaway instance is a
   partial record. The one thing a local DB *doesn't* give you is travel-with-the-code — so,

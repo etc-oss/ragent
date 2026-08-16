@@ -11,10 +11,10 @@ working checklist. `[x]` = done.
 - [ ] **Egress follow-up: a domain-filtering proxy** — the IP-allowlist has residual limits
   (CDN IP rotation/sharing; DNS-based exfil not covered). A domain-aware proxy is tighter.
 
-## Near-term (xynergy pulls these)
+## Near-term (a consuming orchestrator pulls these)
 - [ ] `orchestrate --json` — machine-readable result (pr_url/branch/status/outcome/iterations).
 - [ ] **SQLite** request/status store — operational source-of-record; doubles as 6c
-  resumable-loop state + xynergy's dispatcher record (+ optional git-notes provenance footnote).
+  resumable-loop state + a consuming orchestrator's dispatcher record (+ optional git-notes provenance footnote).
 - [ ] `ragent task clean` — GC reused/ephemeral clones (never auto-deleted).
 - [ ] 6c: durable/resumable waits + concurrency.
 
@@ -33,7 +33,7 @@ working checklist. `[x]` = done.
   profile SPI** + an **ACP/A2A** endpoint; keep `code` as the reference profile behind it. Add
   `web` (Firecrawl), `data` (MCP-over-source), `reservations`, `ops`/`comms`, `research`
   **just-in-time** — each a thin wrapper over a pluggable tool; egress allowlist per-profile.
-  The profiles are xynergy's syKeepers.
+  The profiles are a consuming orchestrator's typed agents.
 
 ## Direction (uncommitted)
 - [ ] `agentConfig` — per-agent native MCP/skills (fixes the harness-efficiency gap).
