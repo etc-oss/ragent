@@ -243,7 +243,12 @@
             tools = wsTools;
             cli = cliApp;
           };
-        defaultWs = mkWorkspace { };
+        # ragent dogfoods itself: give the jailed agent python3 (+ pytest) on its in-sandbox
+        # PATH (projectTools, ADR-0019) so it can RUN/TEST the Python CLI it edits — e.g.
+        # `python3 -m ragent.cli task clean` or the tests/. Deps are projectTools, not a Makefile.
+        defaultWs = mkWorkspace {
+          projectTools = [ (pkgs.python3.withPackages (ps: [ ps.pytest ])) ];
+        };
         # A thin flat alias for a `ragent task <sub>` subcommand: `nix run .#task-<sub>`.
         mkTaskAlias = sub: desc: {
           type = "app";
