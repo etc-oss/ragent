@@ -72,6 +72,7 @@ Task-focused how-tos in **[`docs/guides/`](docs/guides/)**:
 - **[Async review with Forgejo](docs/guides/async-review-forgejo.md)** — agent → PR → review → merge.
 - **[Fork ragent into your project](#forking-ragent-into-another-project)** — consume it as a pinned flake input.
 - **[Troubleshooting](docs/guides/troubleshooting.md)** — the common gotchas + fixes.
+- **[Configuration reference](docs/knowledge/components/configuration-reference.md)** — every `RAGENT_*` variable in one table (defaults, scope, options).
 
 > ragent uses OKF + ADRs for *its own* knowledge, but it **doesn't impose a docs
 > format on you** — your project can use ADR-only, OKF, plain Markdown, Obsidian,

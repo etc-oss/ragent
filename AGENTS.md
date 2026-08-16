@@ -52,7 +52,8 @@ Concept types (frontmatter `type`):
 - **convention** — the standards below.
 
 Entry points: [knowledge bundle index](docs/knowledge/index.md),
-[decisions index](docs/knowledge/decisions/index.md).
+[decisions index](docs/knowledge/decisions/index.md),
+[configuration reference](docs/knowledge/components/configuration-reference.md) (every `RAGENT_*` variable).
 
 ## Working rules (conventions)
 

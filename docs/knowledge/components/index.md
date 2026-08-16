@@ -28,3 +28,5 @@ Architecture concepts and planning.
   — evaluation of Zellij remote sessions + a server-backed diff-review surface.
 - [COMP-forgejo-transport — Forgejo-as-transport for async agent review (design)](forgejo-transport-design.md)
   — concrete Phase 6a design: shared guest forge, outside-jail push, bounded comment loop.
+- [COMP-configuration-reference — Configuration reference (every `RAGENT_*` variable)](configuration-reference.md)
+  — the central, tabulated list of all env vars with defaults, scope, and options.
