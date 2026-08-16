@@ -52,9 +52,10 @@
         docsShell = pkgs.mkShell {
           packages = [ pkgs.python3 pkgs.git ];
           shellHook = ''
-            echo "ragent docs devshell."
+            echo "ragent DOCS devshell — the \`ragent\` CLI + the agents are NOT in this shell."
             echo "  Render docs:  python3 tools/okf_render.py   (-> docs/html/)"
-            echo "  Jail/workspace: Linux only — run in a Linux guest (VM config in your config repo, e.g. your-config-repo)."
+            echo "  The ragent CLI + agents (Linux guest):  nix develop .#workspace   (then: ragent -h)"
+            echo "  Or run an app directly:  nix run .#task-orchestrate -- <name> \"<prompt>\""
           '';
         };
 
